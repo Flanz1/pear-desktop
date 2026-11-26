@@ -123,7 +123,11 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          dir="$(ls -d pack/win-unpacked pack/linux-unpacked 2>/dev/null | head -n1)"
+          dir=""
+          for d in pack/win-unpacked pack/linux-unpacked; do
+            if [ -d "$d" ]; then dir="$d"; break; fi
+          done
+          [ -n "$dir" ] || { echo "::error::no unpacked app directory in pack/"; exit 1; }
           echo "== $dir"
           cat "$dir/resources/app-update.yml"
           grep -q 'owner: Flanz1' "$dir/resources/app-update.yml"
