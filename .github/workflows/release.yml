@@ -1,7 +1,7 @@
 name: Release
 
 # Pushing a tag like v3.12.1-remote.1 builds the Windows and Linux desktop app
-# ("Pear Desktop Remote") and the signed Android phone remote APK, then creates a
+#  and the signed Android phone remote APK, then creates a
 # DRAFT GitHub release. Nothing is public until the draft is published by hand.
 
 on:
@@ -119,20 +119,15 @@ jobs:
           # -p never: publishing is done by the draft-release job, not by electron-builder.
           pnpm electron-builder ${{ matrix.targets }} -p never --config electron-builder.release.yml
 
-      - name: Verify the app is isolated from upstream and updates from this fork
+      - name: Verify the app updates from this fork
         shell: bash
         run: |
           set -euo pipefail
           dir="$(ls -d pack/win-unpacked pack/linux-unpacked 2>/dev/null | head -n1)"
           echo "== $dir"
-          grep -E 'owner|repo|provider' "$dir/resources/app-update.yml"
+          cat "$dir/resources/app-update.yml"
           grep -q 'owner: Flanz1' "$dir/resources/app-update.yml"
           grep -q 'repo: pear-desktop' "$dir/resources/app-update.yml"
-          asar="$PWD/$dir/resources/app.asar"
-          tmp="$(mktemp -d)"
-          (cd "$tmp" && npx --yes @electron/asar extract-file "$asar" package.json)
-          if command -v cygpath > /dev/null; then tmp="$(cygpath -m "$tmp")"; fi
-          node -e "const p=require(process.argv[1]); if (p.name!=='pear-desktop-remote' || p.productName!=='Pear Desktop Remote') { console.error('wrong app identity:', p.name, p.productName); process.exit(1); }" "$tmp/package.json"
 
       - name: Upload artifacts
         uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f

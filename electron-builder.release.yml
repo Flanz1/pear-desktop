@@ -1,19 +1,11 @@
 # Release variant of the app, built only by .github/workflows/release.yml.
 #
-# It ships as its own app ("Pear Desktop Remote") so it installs next to the
-# upstream Pear Desktop instead of replacing it:
-#   - own appId/productName: separate install folder, registry key and shortcuts;
-#   - own package name inside the app: separate Electron userData folder
-#     (settings, caches, phone-remote state) and single-instance lock;
-#   - publish points at this fork's GitHub releases, so app-update.yml makes
-#     the built-in updater look there and never at upstream's releases.
+# It keeps the stable app's identity (appId, productName, package name), so it
+# installs over an existing Pear Desktop / YouTube Music install and keeps its
+# settings. The only difference from the base config is `publish`: it points at
+# this fork's GitHub releases, so app-update.yml makes the built-in updater look
+# there and never at upstream's releases.
 extends: ./electron-builder.yml
-appId: com.github.flanz1.pear-desktop-remote
-productName: Pear Desktop Remote
-extraMetadata:
-  name: pear-desktop-remote
-  productName: Pear Desktop Remote
-  desktopName: com.github.flanz1.pear-desktop-remote
 publish:
   provider: github
   owner: Flanz1
