@@ -75,7 +75,9 @@ describe('TLS identity', () => {
 
 describe('PairingController', () => {
   it('uses fresh single-use credentials and closes on timeout', async () => {
-    const p = new PairingController(async () => true, { windowMs: 50 });
+    const p = new PairingController(() => Promise.resolve(true), {
+      windowMs: 50,
+    });
     const a = p.open();
     assert.match(a.secret, /^[A-Za-z0-9_-]{22}$/);
     assert.match(a.code, /^[0-9]{6}$/);
@@ -118,7 +120,7 @@ describe('PlayerStateTracker', () => {
     queueRevision: 0,
   };
 
-  it('emits only real changes, all schema-valid', async () => {
+  it('emits only real changes, all schema-valid', () => {
     let now = 0;
     const out: { type: string }[] = [];
     const t = new PlayerStateTracker(

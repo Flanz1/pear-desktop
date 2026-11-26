@@ -63,22 +63,15 @@ const readQueue = () => {
   if (!items) return null;
   return items.map((item, index) => {
     const r = rendererOf(item);
-    const runs = (r?.title as { runs?: { text?: string }[] } | undefined)?.runs;
-    const byline = ((
-      r as { shortBylineText?: { runs?: { text?: string }[] } } | undefined
-    )?.shortBylineText ?? r?.longBylineText) as
-      | { runs?: { text?: string }[] }
-      | undefined;
-    const thumbs = (
-      r?.thumbnail as { thumbnails?: { url?: string }[] } | undefined
-    )?.thumbnails;
-    const length = (r?.lengthText as { runs?: { text?: string }[] } | undefined)
-      ?.runs?.[0]?.text;
+    const runs = r?.title?.runs;
+    const byline = r?.longBylineText?.runs;
+    const thumbs = r?.thumbnail?.thumbnails;
+    const length = r?.lengthText?.runs?.[0]?.text;
     return {
       index,
       videoId: r?.videoId ?? '',
       title: runs?.map((x) => x.text ?? '').join('') ?? '',
-      artist: byline?.runs?.[0]?.text ?? '',
+      artist: byline?.[0]?.text ?? '',
       durationSeconds: parseLength(length),
       thumbnailUrl: thumbs?.at(-1)?.url ?? null,
       isCurrent: r?.selected === true,

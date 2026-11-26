@@ -539,7 +539,7 @@ const extractId = (raw: string | null): string | null => {
   try {
     const v: unknown = JSON.parse(raw);
     if (v && typeof v === 'object' && 'id' in v) {
-      const id = RequestIdSchema.safeParse((v as { id: unknown }).id);
+      const id = RequestIdSchema.safeParse(v.id);
       return id.success ? id.data : null;
     }
   } catch {

@@ -17,16 +17,16 @@ phone control playback over the local network.
 
 ## Layout
 
-| File                        | Role                                                         |
-| --------------------------- | ------------------------------------------------------------ |
-| `backend/server.ts`         | TLS + WebSocket listener, handshake, auth, commands, limits  |
-| `backend/pairing.ts`        | Pairing window state machine                                 |
-| `backend/devices.ts`        | Device records, hashed tokens, constant-time checks          |
-| `backend/identity.ts`       | Key pair and certificate, SPKI fingerprint                   |
-| `backend/player-state.ts`   | Player state, change detection, event coalescing             |
-| `backend/player-bridge.ts`  | App player controls + song-info + page bridge as PlayerPort  |
-| `renderer.ts`               | **The only module that touches YT Music page internals**     |
-| `backend/service.ts`        | Wires everything together; used by the backend and the menu  |
+| File                       | Role                                                        |
+| -------------------------- | ----------------------------------------------------------- |
+| `backend/server.ts`        | TLS + WebSocket listener, handshake, auth, commands, limits |
+| `backend/pairing.ts`       | Pairing window state machine                                |
+| `backend/devices.ts`       | Device records, hashed tokens, constant-time checks         |
+| `backend/identity.ts`      | Key pair and certificate, SPKI fingerprint                  |
+| `backend/player-state.ts`  | Player state, change detection, event coalescing            |
+| `backend/player-bridge.ts` | App player controls + song-info + page bridge as PlayerPort |
+| `renderer.ts`              | **The only module that touches YT Music page internals**    |
+| `backend/service.ts`       | Wires everything together; used by the backend and the menu |
 
 `server.ts`, `pairing.ts`, `devices.ts`, `identity.ts`, `player-state.ts` and
 `rate-limit.ts` don't import Electron, so they run under plain Node.

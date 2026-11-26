@@ -5,7 +5,7 @@ import { type BrowserWindow, ipcMain, type IpcMainEvent } from 'electron';
 import { getSongControls } from '@/providers/song-controls';
 import { registerCallback, type SongInfo } from '@/providers/song-info';
 
-import { PlayerStateTracker, type PageSnapshot } from './player-state.ts';
+import { PlayerStateTracker } from './player-state.ts';
 
 import {
   LIMITS,
@@ -218,7 +218,7 @@ export class PlayerBridge implements PlayerPort {
   private readonly onSnapshot = (event: IpcMainEvent, snapshot: unknown) => {
     if (event.sender !== this.win.webContents) return;
     if (!snapshot || typeof snapshot !== 'object') return;
-    this.tracker.setPage(snapshot as Partial<PageSnapshot>);
+    this.tracker.setPage(snapshot);
   };
 
   private readonly onQueue = (

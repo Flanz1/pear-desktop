@@ -1,3 +1,6 @@
+// @peculiar/x509 (via tsyringe) needs the Reflect metadata API at load time.
+import 'reflect-metadata';
+
 import { createHash, webcrypto, X509Certificate } from 'node:crypto';
 
 import * as x509 from '@peculiar/x509';

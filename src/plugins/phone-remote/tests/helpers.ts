@@ -68,10 +68,15 @@ export class FakePlayer implements PlayerPort {
   getState() {
     return this.state;
   }
-  async getQueue() {
-    return this.state ? { items: this.queue, truncated: false } : null;
+  getQueue() {
+    return Promise.resolve(
+      this.state ? { items: this.queue, truncated: false } : null,
+    );
   }
-  async execute(cmd: ControlCommand) {
+  execute(cmd: ControlCommand) {
+    return Promise.resolve(this.run(cmd));
+  }
+  private run(cmd: ControlCommand) {
     if (!this.state) return 'not_ready' as const;
     if (cmd.type === 'queue.play') {
       const item = this.queue.find((i) => i.index === cmd.index);
@@ -167,10 +172,11 @@ export class TestClient {
         .update(spki)
         .digest('base64url');
     });
-    this.ws.on('message', (data) => {
-      const parsed = ServerMessageSchema.safeParse(JSON.parse(String(data)));
+    this.ws.on('message', (data: Buffer) => {
+      const json: unknown = JSON.parse(data.toString('utf8'));
+      const parsed = ServerMessageSchema.safeParse(json);
       if (parsed.success) this.received.push(parsed.data);
-      else this.invalid.push(JSON.parse(String(data)));
+      else this.invalid.push(json);
       this.wake();
     });
     this.ws.on('close', (code) => {
