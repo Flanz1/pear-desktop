@@ -37,6 +37,15 @@ enum class ErrorCode(val wire: String) {
     NOT_READY("not_ready"),
     STALE_QUEUE("stale_queue"),
     INTERNAL("internal"),
+
+    /** 1.1, catalog commands only: ref or cursor unknown, expired, or not valid for this action. */
+    NOT_FOUND("not_found"),
+
+    /** 1.1, catalog commands only: needs a signed-in YouTube Music account on the desktop. */
+    SIGNED_OUT("signed_out"),
+
+    /** 1.1, catalog commands only: YouTube failed or returned something the desktop can't read. */
+    UNAVAILABLE("unavailable"),
     ;
 
     companion object {
@@ -64,6 +73,10 @@ data class Track(
     val album: String?,
     val durationSeconds: Double?,
     val thumbnailUrl: String?,
+    /** 1.1: thumbnail ref for catalog.thumb, or null. Never a URL. */
+    val thumb: String? = null,
+    /** Whether the `thumb` key was on the wire (absent in 1.0 sessions); kept for exact round trips. */
+    val thumbPresent: Boolean = thumb != null,
 )
 
 data class Playback(val status: PlaybackStatus, val positionSeconds: Double)
@@ -87,6 +100,9 @@ data class QueueItem(
     val durationSeconds: Double?,
     val thumbnailUrl: String?,
     val isCurrent: Boolean,
+    /** 1.1: same rule as [Track.thumb]. */
+    val thumb: String? = null,
+    val thumbPresent: Boolean = thumb != null,
 )
 
 data class SupportedRange(val min: Int, val max: Int)
@@ -125,6 +141,31 @@ sealed interface ServerMessage {
     data object QueueChanged : ServerMessage
     data class Queue(val id: String, val items: List<QueueItem>, val truncated: Boolean) : ServerMessage
     data class ServerClosing(val reason: ClosingReason) : ServerMessage
+
+    // ---- 1.1, only in answer to catalog commands ----
+
+    data class CatalogPage(
+        val id: String,
+        val title: String,
+        val subtitle: String?,
+        val header: CatalogHeader?,
+        val chips: List<CatalogChip>,
+        val sections: List<CatalogSection>,
+        /** How this answer joins the page already shown; null for a first page. */
+        val append: CatalogAppend?,
+        /** Cursor for the next page, or null when there is no more. */
+        val continuation: String?,
+    ) : ServerMessage
+
+    data class CatalogSuggestions(val id: String, val items: List<String>) : ServerMessage
+
+    /** [data] is standard base64; decoded it is at most [Limits.THUMB_MAX_BYTES]. */
+    class CatalogThumb(val id: String, val mime: ThumbMime, val data: String) : ServerMessage {
+        fun bytes(): ByteArray = java.util.Base64.getDecoder().decode(data)
+        override fun toString() = "CatalogThumb(id=$id, mime=${mime.wire}, ${data.length} chars)"
+        override fun equals(other: Any?) = other is CatalogThumb && other.id == id && other.mime == mime && other.data == data
+        override fun hashCode() = data.hashCode()
+    }
 }
 
 data class PairDevice(val name: String, val model: String?)
@@ -197,5 +238,34 @@ sealed interface ClientCommand {
     data class QueueGet(override val id: String) : ClientCommand { override val type get() = "queue.get" }
     data class QueuePlay(override val id: String, val index: Int, val videoId: String) : ClientCommand {
         override val type get() = "queue.play"
+    }
+
+    // ---- 1.1 catalog, gated with Capabilities.isCommandAvailable ----
+
+    data class CatalogBrowse(override val id: String, val target: BrowseTarget, val continuation: String?) :
+        ClientCommand {
+        override val type get() = "catalog.browse"
+    }
+    data class CatalogOpen(override val id: String, val ref: String, val continuation: String?) : ClientCommand {
+        override val type get() = "catalog.open"
+    }
+    /** [query] is sent trimmed; see [Fields.catalogQuery]. */
+    data class CatalogSearch(
+        override val id: String,
+        val query: String,
+        val filter: SearchFilter,
+        val continuation: String?,
+    ) : ClientCommand {
+        override val type get() = "catalog.search"
+    }
+    data class CatalogSuggest(override val id: String, val query: String) : ClientCommand {
+        override val type get() = "catalog.suggest"
+    }
+    /** [action] is never [CatalogAction.OPEN]; the encoder refuses it. */
+    data class CatalogPlay(override val id: String, val ref: String, val action: CatalogAction) : ClientCommand {
+        override val type get() = "catalog.play"
+    }
+    data class CatalogThumb(override val id: String, val thumb: String) : ClientCommand {
+        override val type get() = "catalog.thumb"
     }
 }

@@ -3,6 +3,7 @@ package dev.pear.remote.client
 import dev.pear.remote.protocol.AppInfo
 import dev.pear.remote.protocol.PairDevice
 import dev.pear.remote.protocol.PairingPayload
+import dev.pear.remote.protocol.ProtocolVersion
 import dev.pear.remote.protocol.ServerMessage
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -60,6 +61,13 @@ class RemoteController(
     @Volatile var session: RemoteSession? = null
         private set
 
+    /** The version sent in hello; tests use it to act as an older phone. */
+    @Volatile internal var helloVersion: ProtocolVersion = ProtocolVersion.CURRENT
+
+    /** Covers via catalog.thumb on the current session. Cleared when the desktop changes. */
+    val thumbnails = Thumbnails(scope) { ref -> session?.thumb(ref) ?: Reply.NotDelivered }
+    private var thumbsFor: String? = null
+
     @Volatile var queueVisible = false
         set(v) {
             field = v
@@ -85,6 +93,11 @@ class RemoteController(
             return
         }
         runningFor = instanceId
+        // Refs are issued per desktop: another desktop's covers are someone else's refs.
+        if (thumbsFor != instanceId) {
+            thumbnails.clear()
+            thumbsFor = instanceId
+        }
         loop = scope.launch { connectLoop(creds) }
     }
 
@@ -115,7 +128,7 @@ class RemoteController(
         while (true) {
             attempt++
             _status.value = ConnectionStatus.Connecting(creds, attempt)
-            val s = RemoteSession(scope, http, app, creds, creds.endpoint, clock)
+            val s = RemoteSession(scope, http, app, creds, creds.endpoint, clock, helloVersion)
             session = s
             s.queueVisible = queueVisible
             val mirror = scope.launch {

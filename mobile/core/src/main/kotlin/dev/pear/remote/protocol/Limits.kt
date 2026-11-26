@@ -13,6 +13,22 @@ object Limits {
     const val WS_PATH = "/pear-remote/ws"
     const val MDNS_SERVICE_TYPE = "_pear-remote._tcp"
 
+    /** Command rate limit on the desktop: token bucket. */
+    const val COMMAND_BURST = 20
+    const val COMMANDS_PER_SECOND = 10
+
+    // Catalog (1.1)
+    const val CATALOG_SECTIONS_MAX = 30
+    const val CATALOG_ITEMS_MAX = 100
+    const val CATALOG_CHIPS_MAX = 20
+    const val CATALOG_SUGGESTIONS_MAX = 10
+    const val CATALOG_QUERY_MAX = 150
+    const val REF_MIN_LENGTH = 16
+    const val REF_MAX_LENGTH = 32
+    const val REF_TTL_MS = 30 * 60 * 1000L
+    const val THUMB_MAX_BYTES = 24 * 1024
+    const val THUMB_MAX_PIXELS = 160
+
     /** The phone pings every 30 s; the desktop drops connections silent for 90 s. */
     const val PING_INTERVAL_MS = 30_000L
 }
@@ -35,7 +51,7 @@ data class ProtocolVersion(val major: Int, val minor: Int) {
 
     companion object {
         /** The version this app implements. */
-        val CURRENT = ProtocolVersion(1, 0)
+        val CURRENT = ProtocolVersion(1, 1)
     }
 }
 
