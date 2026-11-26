@@ -19,6 +19,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import kotlinx.serialization.json.Json
@@ -166,6 +167,23 @@ class DesktopInteropTest {
         controller.player.await { it?.state?.track?.title == "Next song" }
         cmd("""{"cmd":"emit","msg":{"type":"volume.changed","volume":{"volume":30,"muted":true}}}""")
         controller.player.await { it?.state?.volume?.muted == true }
+
+        // A requested volume holds against stale echoes of earlier commands,
+        // then the desktop's own value wins again.
+        fun emitVolume(v: Int) =
+            cmd("""{"cmd":"emit","msg":{"type":"volume.changed","volume":{"volume":$v,"muted":false}}}""")
+        assertEquals(CommandResult.Ok, s.setVolume(40))
+        assertEquals(40, controller.player.value?.state?.volume?.volume)
+        emitVolume(35)
+        controller.player.await { it?.state?.volume?.muted == false }
+        assertEquals(40, controller.player.value?.state?.volume?.volume)
+        emitVolume(40)
+        emitVolume(55)
+        controller.player.await { it?.state?.volume?.volume == 55 }
+        assertEquals(CommandResult.Ok, s.setVolume(20))
+        delay(1_700)
+        emitVolume(25)
+        controller.player.await { it?.state?.volume?.volume == 25 }
         Unit
     }
 

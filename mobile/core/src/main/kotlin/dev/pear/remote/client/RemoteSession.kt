@@ -15,6 +15,7 @@ import dev.pear.remote.protocol.LikeStatus
 import dev.pear.remote.protocol.Limits
 import dev.pear.remote.protocol.PlaybackStatus
 import dev.pear.remote.protocol.PlayerState
+import dev.pear.remote.protocol.VolumeState
 import dev.pear.remote.protocol.ProtocolCodec
 import dev.pear.remote.protocol.ProtocolVersion
 import dev.pear.remote.protocol.QueueItem
@@ -218,7 +219,7 @@ class RemoteSession internal constructor(
         val now = clock.nanos()
         when (msg) {
             is ServerMessage.State -> {
-                _player.value = PlayerSnapshot(msg.state, now)
+                _player.value = PlayerSnapshot(msg.state.copy(volume = reconcileVolume(msg.state.volume, now)), now)
                 msg.id?.let { pending.remove(it)?.complete(msg) }
             }
             is ServerMessage.Result -> pending.remove(msg.id)?.complete(msg)
@@ -243,7 +244,10 @@ class RemoteSession internal constructor(
                 copy(track = msg.track, playback = playback.copy(positionSeconds = 0.0))
             }
             is ServerMessage.PlaybackChanged -> update(now, resetAnchor = true) { copy(playback = msg.playback) }
-            is ServerMessage.VolumeChanged -> update(now) { copy(volume = msg.volume) }
+            is ServerMessage.VolumeChanged -> {
+                val v = reconcileVolume(msg.volume, now)
+                update(now) { copy(volume = v) }
+            }
             is ServerMessage.RepeatChanged -> update(now) { copy(repeat = msg.repeat) }
             is ServerMessage.ShuffleChanged -> update(now) { copy(shuffle = msg.shuffle) }
             is ServerMessage.LikeChanged -> update(now) { copy(like = msg.like) }
@@ -259,6 +263,23 @@ class RemoteSession internal constructor(
                 }
             }
         }
+    }
+
+    // The volume the user last asked for. Echoes of earlier, in-between
+    // setVolume commands (a slider drag sends several) keep arriving after
+    // it, so the shown volume holds this value until the desktop reports it
+    // back or VOLUME_HOLD_NANOS pass, whichever comes first. Then the
+    // desktop's value wins, so a real change on the desktop still shows.
+    @Volatile private var volumeIntent: Int? = null
+    @Volatile private var volumeIntentUntil = 0L
+
+    private fun reconcileVolume(incoming: VolumeState, now: Long): VolumeState {
+        val want = volumeIntent ?: return incoming
+        if (incoming.volume == want || now - volumeIntentUntil >= 0) {
+            volumeIntent = null
+            return incoming
+        }
+        return incoming.copy(volume = want)
     }
 
     private inline fun update(now: Long, resetAnchor: Boolean = false, f: PlayerState.() -> PlayerState) {
@@ -397,7 +418,14 @@ class RemoteSession internal constructor(
     suspend fun next() = send(ClientCommand::Next)
     suspend fun previous() = send(ClientCommand::Previous)
     suspend fun seek(seconds: Double) = send({ ClientCommand.Seek(it, seconds.coerceIn(0.0, 86_400.0)) })
-    suspend fun setVolume(v: Int) = send({ ClientCommand.SetVolume(it, v.coerceIn(0, 100)) })
+    suspend fun setVolume(v: Int): CommandResult {
+        val target = v.coerceIn(0, 100)
+        val now = clock.nanos()
+        volumeIntent = target
+        volumeIntentUntil = now + VOLUME_HOLD_NANOS
+        update(now) { copy(volume = volume.copy(volume = target)) }
+        return send({ ClientCommand.SetVolume(it, target) })
+    }
     suspend fun setMuted(m: Boolean) = send({ ClientCommand.SetMuted(it, m) })
     suspend fun toggleShuffle() = send(ClientCommand::ToggleShuffle)
     suspend fun setRepeat(mode: RepeatMode) = send({ ClientCommand.SetRepeat(it, mode) })
@@ -418,5 +446,8 @@ class RemoteSession internal constructor(
         const val SUGGEST_TIMEOUT_MS = 5_000L
         const val PLAY_TIMEOUT_MS = 15_000L
         const val THUMB_TIMEOUT_MS = 10_000L
+
+        // How long a requested volume is shown before the desktop's value wins.
+        const val VOLUME_HOLD_NANOS = 1_500_000_000L
     }
 }

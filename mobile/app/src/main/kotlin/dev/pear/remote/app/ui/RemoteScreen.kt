@@ -1,5 +1,6 @@
 package dev.pear.remote.app.ui
 
+import kotlin.math.roundToInt
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -330,13 +331,13 @@ fun VolumeRow(s: PlayerSnapshot, vm: RemoteViewModel) {
                 val now = System.nanoTime()
                 if (now - lastSent > 120_000_000L) {
                     lastSent = now
-                    val v = it.toInt()
+                    val v = it.roundToInt()
                     vm.command { setVolume(v) }
                 }
             },
             onValueChangeFinished = {
                 dragging = false
-                val v = dragValue.toInt()
+                val v = dragValue.roundToInt()
                 vm.command { setVolume(v) }
             },
             valueRange = 0f..100f,
