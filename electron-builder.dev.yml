@@ -1,0 +1,30 @@
+# Side-by-side test variant, used only by the PR artifact workflow (never by
+# releases). It must not share an identity with the stable app:
+#   - another appId and productName, so the installer lands in its own
+#     directory and registry key instead of replacing an installed app;
+#   - another package name/productName inside the app, so Electron's userData
+#     folder (settings, caches, the phone-remote state) and the
+#     single-instance lock are separate from the stable app's;
+#   - a full nsis installer instead of nsis-web (a web installer needs a publish
+#     URL to download its app package from, i.e. the stable app's releases);
+#   - no publish provider, so no app-update.yml is generated and the built-in
+#     updater is inactive: it can never fetch the stable app's installer.
+extends: ./electron-builder.yml
+appId: com.github.flanz1.pear-desktop-dev
+productName: Pear Desktop Dev
+extraMetadata:
+  name: pear-desktop-dev
+  productName: Pear Desktop Dev
+publish: null
+win:
+  icon: assets/generated/icons/win/icon.ico
+  target:
+    - target: nsis
+      arch:
+        - x64
+        - arm64
+    - target: portable
+      arch:
+        - x64
+        - arm64
+  compression: maximum
