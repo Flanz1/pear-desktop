@@ -98,7 +98,7 @@ jobs:
         run: node --test 'protocol/tests/*.test.ts'
 
   desktop:
-    name: Desktop lint + build (${{ matrix.os }})
+    name: Desktop lint + typecheck + build (${{ matrix.os }})
     needs: changes
     if: needs.changes.outputs.app == 'true'
     runs-on: ${{ matrix.os }}
@@ -111,6 +111,7 @@ jobs:
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
         with:
+          fetch-depth: 0
           persist-credentials: false
 
       - name: Install pnpm
@@ -130,6 +131,22 @@ jobs:
 
       - name: Lint
         run: pnpm lint
+
+      # Existing oxlint errors on master must not block PRs, so only files
+      # changed by the PR are linted: new violations fail, old ones don't.
+      - name: Lint changed files
+        shell: bash
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          files="$(git diff --name-only --diff-filter=ACMR "$BASE_SHA" "$HEAD_SHA" -- 'src/**/*.ts' 'src/**/*.tsx' 'src/**/*.js' 'src/**/*.jsx' 'src/**/*.mts')"
+          if [ -z "$files" ]; then
+            echo "No changed source files to lint."
+          else
+            echo "$files"
+            echo "$files" | xargs pnpm exec oxlint --type-aware
+          fi
 
       - name: Typecheck
         run: pnpm typecheck
