@@ -117,7 +117,8 @@ are accepted before `welcome`.
 2. Unknown device and wrong token get the same response: `error` code
    `unauthorized`, close 4401. Neither case is distinguishable from the other.
 3. Failed attempts are rate limited per peer address: after 5 failures in 60 s,
-   further connections from that address are refused for 60 s.
+   further connections from that address are refused for 60 s. Failures are
+   `unauthorized` hellos and `pairing_invalid` pair requests, counted together.
 4. On success: update `lastSeenAt`, send `welcome`, then an unsolicited
    `state` (with `id: null`).
 
@@ -139,8 +140,17 @@ appears in a URL, query string, header, or log line.
   timeout, the listener being disabled, or 5 failed attempts
   (`pairingMaxFailedAttempts`). A failed attempt is a `pair.request` with a
   wrong secret or code.
-- Outside an open window, every `pair.request` gets `pairing_closed` and
-  close 4401.
+- A `pair.request` with the **correct** secret or code consumes the window:
+  from that moment the window is closed to everyone else, and it ends with
+  that request's outcome (Allow, Deny, timeout, or the phone disconnecting
+  while the dialog is open, which dismisses the dialog). It is never reopened.
+  Pairing another phone, or retrying after Deny, takes a new **Pair new
+  phone** click with a fresh secret and code.
+- Outside an open window, including while the confirmation dialog for another
+  request is showing, every `pair.request` gets `pairing_closed` and close 4401. `pairing_closed` does not count as a failed attempt.
+- Each `pairing_invalid` also counts as an authentication failure for the
+  per-address limit in section 5.1 (5 failures in 60 s from one address, then
+  60 s refusal), in addition to the window's own limit of 5.
 
 ### 6.2 Pairing URI (QR code)
 
@@ -168,8 +178,9 @@ IPv6 zone ID. The phone MUST reject a URI that fails these checks. See
 3. If it is right, the desktop shows a modal: _"Allow **{device.name}**
    ({device.model}, {peer IP}) to control playback?"_ with **Deny** as the
    default button. Nothing is paired without the user's click.
-4. Deny: `error` `pairing_denied`. Window timeout while the dialog is open:
-   dismiss it, `error` `pairing_timeout`.
+4. Deny: `error` `pairing_denied`, close 4401; the window is closed (see
+   6.1). Window timeout while the dialog is open: dismiss it, `error`
+   `pairing_timeout`, close 4401.
 5. Allow: the desktop generates a device ID (UUID v4) and a 32-byte token,
    stores the device record, closes the window, and sends `pair.result`
    (`deviceId`, `token`, `instanceId`), then closes with 1000.
