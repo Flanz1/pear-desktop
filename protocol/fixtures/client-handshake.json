@@ -1,0 +1,312 @@
+{
+  "description": "First message on a connection. Desktop: parseClientHandshake must accept every valid entry and reject every invalid one. Android: the messages your serializer produces must match the valid entries.",
+  "valid": [
+    {
+      "name": "hello",
+      "value": {
+        "type": "hello",
+        "protocol": {
+          "major": 1,
+          "minor": 0
+        },
+        "client": {
+          "name": "pear-remote-android",
+          "version": "0.1.0"
+        },
+        "deviceId": "0b7e2f4a-3c1d-4e5f-8a9b-1c2d3e4f5a6b",
+        "token": "q1W2e3R4t5Y6u7I8o9P0a1S2d3F4g5H6j7K8l9Z0x1C"
+      }
+    },
+    {
+      "name": "hello from newer minor",
+      "value": {
+        "type": "hello",
+        "protocol": {
+          "major": 1,
+          "minor": 3
+        },
+        "client": {
+          "name": "pear-remote-android",
+          "version": "0.1.0"
+        },
+        "deviceId": "0b7e2f4a-3c1d-4e5f-8a9b-1c2d3e4f5a6b",
+        "token": "q1W2e3R4t5Y6u7I8o9P0a1S2d3F4g5H6j7K8l9Z0x1C"
+      }
+    },
+    {
+      "name": "pair.request with QR secret",
+      "value": {
+        "type": "pair.request",
+        "protocol": {
+          "major": 1,
+          "minor": 0
+        },
+        "client": {
+          "name": "pear-remote-android",
+          "version": "0.1.0"
+        },
+        "device": {
+          "name": "Marko's Pixel",
+          "model": "Pixel 8"
+        },
+        "secret": "Zm9vYmFyYmF6cXV4MTIzNA"
+      }
+    },
+    {
+      "name": "pair.request with code, no model",
+      "value": {
+        "type": "pair.request",
+        "protocol": {
+          "major": 1,
+          "minor": 0
+        },
+        "client": {
+          "name": "pear-remote-android",
+          "version": "0.1.0"
+        },
+        "device": {
+          "name": "Phone",
+          "model": null
+        },
+        "code": "048213"
+      }
+    }
+  ],
+  "invalid": [
+    {
+      "name": "unknown type",
+      "value": {
+        "type": "hi",
+        "protocol": {
+          "major": 1,
+          "minor": 0
+        }
+      }
+    },
+    {
+      "name": "hello missing token",
+      "value": {
+        "type": "hello",
+        "protocol": {
+          "major": 1,
+          "minor": 0
+        },
+        "client": {
+          "name": "pear-remote-android",
+          "version": "0.1.0"
+        },
+        "deviceId": "0b7e2f4a-3c1d-4e5f-8a9b-1c2d3e4f5a6b"
+      }
+    },
+    {
+      "name": "hello short token",
+      "value": {
+        "type": "hello",
+        "protocol": {
+          "major": 1,
+          "minor": 0
+        },
+        "client": {
+          "name": "pear-remote-android",
+          "version": "0.1.0"
+        },
+        "deviceId": "0b7e2f4a-3c1d-4e5f-8a9b-1c2d3e4f5a6b",
+        "token": "q1W2e3R4t5Y6u7I8o9P0a1S2d3F4g5H6j7K8l9Z0x1"
+      }
+    },
+    {
+      "name": "hello token with padding",
+      "value": {
+        "type": "hello",
+        "protocol": {
+          "major": 1,
+          "minor": 0
+        },
+        "client": {
+          "name": "pear-remote-android",
+          "version": "0.1.0"
+        },
+        "deviceId": "0b7e2f4a-3c1d-4e5f-8a9b-1c2d3e4f5a6b",
+        "token": "q1W2e3R4t5Y6u7I8o9P0a1S2d3F4g5H6j7K8l9Z0x1="
+      }
+    },
+    {
+      "name": "hello extra field",
+      "value": {
+        "type": "hello",
+        "protocol": {
+          "major": 1,
+          "minor": 0
+        },
+        "client": {
+          "name": "pear-remote-android",
+          "version": "0.1.0"
+        },
+        "deviceId": "0b7e2f4a-3c1d-4e5f-8a9b-1c2d3e4f5a6b",
+        "token": "q1W2e3R4t5Y6u7I8o9P0a1S2d3F4g5H6j7K8l9Z0x1C",
+        "admin": true
+      }
+    },
+    {
+      "name": "hello __proto__ key",
+      "value": {
+        "type": "hello",
+        "protocol": {
+          "major": 1,
+          "minor": 0
+        },
+        "client": {
+          "name": "pear-remote-android",
+          "version": "0.1.0"
+        },
+        "deviceId": "0b7e2f4a-3c1d-4e5f-8a9b-1c2d3e4f5a6b",
+        "token": "q1W2e3R4t5Y6u7I8o9P0a1S2d3F4g5H6j7K8l9Z0x1C",
+        "__proto__": {
+          "x": 1
+        }
+      }
+    },
+    {
+      "name": "hello deviceId not uuid",
+      "value": {
+        "type": "hello",
+        "protocol": {
+          "major": 1,
+          "minor": 0
+        },
+        "client": {
+          "name": "pear-remote-android",
+          "version": "0.1.0"
+        },
+        "deviceId": "my-phone",
+        "token": "q1W2e3R4t5Y6u7I8o9P0a1S2d3F4g5H6j7K8l9Z0x1C"
+      }
+    },
+    {
+      "name": "hello fractional minor",
+      "value": {
+        "type": "hello",
+        "protocol": {
+          "major": 1,
+          "minor": 0.5
+        },
+        "client": {
+          "name": "pear-remote-android",
+          "version": "0.1.0"
+        },
+        "deviceId": "0b7e2f4a-3c1d-4e5f-8a9b-1c2d3e4f5a6b",
+        "token": "q1W2e3R4t5Y6u7I8o9P0a1S2d3F4g5H6j7K8l9Z0x1C"
+      }
+    },
+    {
+      "name": "pair.request with both secret and code",
+      "value": {
+        "type": "pair.request",
+        "protocol": {
+          "major": 1,
+          "minor": 0
+        },
+        "client": {
+          "name": "pear-remote-android",
+          "version": "0.1.0"
+        },
+        "device": {
+          "name": "Marko's Pixel",
+          "model": "Pixel 8"
+        },
+        "secret": "Zm9vYmFyYmF6cXV4MTIzNA",
+        "code": "123456"
+      }
+    },
+    {
+      "name": "pair.request with neither",
+      "value": {
+        "type": "pair.request",
+        "protocol": {
+          "major": 1,
+          "minor": 0
+        },
+        "client": {
+          "name": "pear-remote-android",
+          "version": "0.1.0"
+        },
+        "device": {
+          "name": "Marko's Pixel",
+          "model": "Pixel 8"
+        }
+      }
+    },
+    {
+      "name": "pair.request 5-digit code",
+      "value": {
+        "type": "pair.request",
+        "protocol": {
+          "major": 1,
+          "minor": 0
+        },
+        "client": {
+          "name": "pear-remote-android",
+          "version": "0.1.0"
+        },
+        "device": {
+          "name": "Marko's Pixel",
+          "model": "Pixel 8"
+        },
+        "code": "12345"
+      }
+    },
+    {
+      "name": "pair.request empty device name",
+      "value": {
+        "type": "pair.request",
+        "protocol": {
+          "major": 1,
+          "minor": 0
+        },
+        "client": {
+          "name": "pear-remote-android",
+          "version": "0.1.0"
+        },
+        "device": {
+          "name": "  ",
+          "model": null
+        },
+        "secret": "Zm9vYmFyYmF6cXV4MTIzNA"
+      }
+    },
+    {
+      "name": "pair.request long device name",
+      "value": {
+        "type": "pair.request",
+        "protocol": {
+          "major": 1,
+          "minor": 0
+        },
+        "client": {
+          "name": "pear-remote-android",
+          "version": "0.1.0"
+        },
+        "device": {
+          "name": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "model": null
+        },
+        "secret": "Zm9vYmFyYmF6cXV4MTIzNA"
+      }
+    },
+    {
+      "name": "command before handshake",
+      "value": {
+        "type": "player.play",
+        "id": "1"
+      }
+    },
+    {
+      "name": "not an object",
+      "value": ["hello"]
+    },
+    {
+      "name": "null",
+      "value": null
+    }
+  ]
+}

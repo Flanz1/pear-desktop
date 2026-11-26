@@ -1,0 +1,102 @@
+{
+  "description": "QR code contents. valid entries include the decoded payload both sides must agree on.",
+  "valid": [
+    {
+      "name": "typical",
+      "uri": "pear-remote://pair?v=1&h=192.168.1.20&p=26539&fp=n4bQgYhMfWWaL-qgxVrQFaO_TxsrC4Is0V1sbv-ixJM&s=Zm9vYmFyYmF6cXV4MTIzNA&i=5f0c6d1e-9a2b-4c3d-8e7f-6a5b4c3d2e1f&n=Marko+PC",
+      "payload": {
+        "majors": [1],
+        "host": "192.168.1.20",
+        "port": 26539,
+        "fingerprint": "n4bQgYhMfWWaL-qgxVrQFaO_TxsrC4Is0V1sbv-ixJM",
+        "secret": "Zm9vYmFyYmF6cXV4MTIzNA",
+        "instanceId": "5f0c6d1e-9a2b-4c3d-8e7f-6a5b4c3d2e1f",
+        "name": "Marko PC"
+      }
+    },
+    {
+      "name": "two majors, 10/8, unicode name",
+      "uri": "pear-remote://pair?v=1%2C2&h=10.0.0.7&p=26539&fp=n4bQgYhMfWWaL-qgxVrQFaO_TxsrC4Is0V1sbv-ixJM&s=Zm9vYmFyYmF6cXV4MTIzNA&i=5f0c6d1e-9a2b-4c3d-8e7f-6a5b4c3d2e1f&n=Stue-PC+%E2%99%AA",
+      "payload": {
+        "majors": [1, 2],
+        "host": "10.0.0.7",
+        "port": 26539,
+        "fingerprint": "n4bQgYhMfWWaL-qgxVrQFaO_TxsrC4Is0V1sbv-ixJM",
+        "secret": "Zm9vYmFyYmF6cXV4MTIzNA",
+        "instanceId": "5f0c6d1e-9a2b-4c3d-8e7f-6a5b4c3d2e1f",
+        "name": "Stue-PC ♪"
+      }
+    },
+    {
+      "name": "IPv6 ULA",
+      "uri": "pear-remote://pair?v=1&h=fd12%3A3456%3A789a%3A%3A1&p=26539&fp=n4bQgYhMfWWaL-qgxVrQFaO_TxsrC4Is0V1sbv-ixJM&s=Zm9vYmFyYmF6cXV4MTIzNA&i=5f0c6d1e-9a2b-4c3d-8e7f-6a5b4c3d2e1f&n=Marko+PC",
+      "payload": {
+        "majors": [1],
+        "host": "fd12:3456:789a::1",
+        "port": 26539,
+        "fingerprint": "n4bQgYhMfWWaL-qgxVrQFaO_TxsrC4Is0V1sbv-ixJM",
+        "secret": "Zm9vYmFyYmF6cXV4MTIzNA",
+        "instanceId": "5f0c6d1e-9a2b-4c3d-8e7f-6a5b4c3d2e1f",
+        "name": "Marko PC"
+      }
+    }
+  ],
+  "invalid": [
+    {
+      "name": "wrong scheme",
+      "uri": "https://pair?v=1&h=192.168.1.20&p=26539&fp=n4bQgYhMfWWaL-qgxVrQFaO_TxsrC4Is0V1sbv-ixJM&s=Zm9vYmFyYmF6cXV4MTIzNA&i=5f0c6d1e-9a2b-4c3d-8e7f-6a5b4c3d2e1f&n=Marko+PC"
+    },
+    {
+      "name": "public IP",
+      "uri": "pear-remote://pair?v=1&h=8.8.8.8&p=26539&fp=n4bQgYhMfWWaL-qgxVrQFaO_TxsrC4Is0V1sbv-ixJM&s=Zm9vYmFyYmF6cXV4MTIzNA&i=5f0c6d1e-9a2b-4c3d-8e7f-6a5b4c3d2e1f&n=Marko+PC"
+    },
+    {
+      "name": "loopback",
+      "uri": "pear-remote://pair?v=1&h=127.0.0.1&p=26539&fp=n4bQgYhMfWWaL-qgxVrQFaO_TxsrC4Is0V1sbv-ixJM&s=Zm9vYmFyYmF6cXV4MTIzNA&i=5f0c6d1e-9a2b-4c3d-8e7f-6a5b4c3d2e1f&n=Marko+PC"
+    },
+    {
+      "name": "0.0.0.0",
+      "uri": "pear-remote://pair?v=1&h=0.0.0.0&p=26539&fp=n4bQgYhMfWWaL-qgxVrQFaO_TxsrC4Is0V1sbv-ixJM&s=Zm9vYmFyYmF6cXV4MTIzNA&i=5f0c6d1e-9a2b-4c3d-8e7f-6a5b4c3d2e1f&n=Marko+PC"
+    },
+    {
+      "name": "hostname",
+      "uri": "pear-remote://pair?v=1&h=evil.example.com&p=26539&fp=n4bQgYhMfWWaL-qgxVrQFaO_TxsrC4Is0V1sbv-ixJM&s=Zm9vYmFyYmF6cXV4MTIzNA&i=5f0c6d1e-9a2b-4c3d-8e7f-6a5b4c3d2e1f&n=Marko+PC"
+    },
+    {
+      "name": "zone id",
+      "uri": "pear-remote://pair?v=1&h=fe80%3A%3A1%25wlan0&p=26539&fp=n4bQgYhMfWWaL-qgxVrQFaO_TxsrC4Is0V1sbv-ixJM&s=Zm9vYmFyYmF6cXV4MTIzNA&i=5f0c6d1e-9a2b-4c3d-8e7f-6a5b4c3d2e1f&n=Marko+PC"
+    },
+    {
+      "name": "172.32 is public",
+      "uri": "pear-remote://pair?v=1&h=172.32.0.1&p=26539&fp=n4bQgYhMfWWaL-qgxVrQFaO_TxsrC4Is0V1sbv-ixJM&s=Zm9vYmFyYmF6cXV4MTIzNA&i=5f0c6d1e-9a2b-4c3d-8e7f-6a5b4c3d2e1f&n=Marko+PC"
+    },
+    {
+      "name": "privileged port",
+      "uri": "pear-remote://pair?v=1&h=192.168.1.20&p=80&fp=n4bQgYhMfWWaL-qgxVrQFaO_TxsrC4Is0V1sbv-ixJM&s=Zm9vYmFyYmF6cXV4MTIzNA&i=5f0c6d1e-9a2b-4c3d-8e7f-6a5b4c3d2e1f&n=Marko+PC"
+    },
+    {
+      "name": "port out of range",
+      "uri": "pear-remote://pair?v=1&h=192.168.1.20&p=70000&fp=n4bQgYhMfWWaL-qgxVrQFaO_TxsrC4Is0V1sbv-ixJM&s=Zm9vYmFyYmF6cXV4MTIzNA&i=5f0c6d1e-9a2b-4c3d-8e7f-6a5b4c3d2e1f&n=Marko+PC"
+    },
+    {
+      "name": "missing secret",
+      "uri": "pear-remote://pair?v=1&h=192.168.1.20&p=26539&fp=n4bQgYhMfWWaL-qgxVrQFaO_TxsrC4Is0V1sbv-ixJM&i=5f0c6d1e-9a2b-4c3d-8e7f-6a5b4c3d2e1f&n=Marko+PC"
+    },
+    {
+      "name": "duplicate key",
+      "uri": "pear-remote://pair?v=1&h=192.168.1.20&p=26539&fp=n4bQgYhMfWWaL-qgxVrQFaO_TxsrC4Is0V1sbv-ixJM&s=Zm9vYmFyYmF6cXV4MTIzNA&i=5f0c6d1e-9a2b-4c3d-8e7f-6a5b4c3d2e1f&n=Marko+PC&s=Zm9vYmFyYmF6cXV4MTIzNA"
+    },
+    {
+      "name": "unknown key",
+      "uri": "pear-remote://pair?v=1&h=192.168.1.20&p=26539&fp=n4bQgYhMfWWaL-qgxVrQFaO_TxsrC4Is0V1sbv-ixJM&s=Zm9vYmFyYmF6cXV4MTIzNA&i=5f0c6d1e-9a2b-4c3d-8e7f-6a5b4c3d2e1f&n=Marko+PC&x=1"
+    },
+    {
+      "name": "short fingerprint",
+      "uri": "pear-remote://pair?v=1&h=192.168.1.20&p=26539&fp=n4bQgYhMfWWaL-qgxVrQFaO_TxsrC4Is0V1sbv-ixJ&s=Zm9vYmFyYmF6cXV4MTIzNA&i=5f0c6d1e-9a2b-4c3d-8e7f-6a5b4c3d2e1f&n=Marko+PC"
+    },
+    {
+      "name": "bad majors",
+      "uri": "pear-remote://pair?v=one&h=192.168.1.20&p=26539&fp=n4bQgYhMfWWaL-qgxVrQFaO_TxsrC4Is0V1sbv-ixJM&s=Zm9vYmFyYmF6cXV4MTIzNA&i=5f0c6d1e-9a2b-4c3d-8e7f-6a5b4c3d2e1f&n=Marko+PC"
+    }
+  ]
+}

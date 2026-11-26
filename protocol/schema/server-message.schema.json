@@ -1,0 +1,612 @@
+{
+  "$id": "https://github.com/Flanz1/pear-desktop/protocol/schema/server-message.schema.json",
+  "title": "Message from the desktop (protocol 1.0)",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "oneOf": [
+    {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "welcome"
+        },
+        "protocol": {
+          "type": "object",
+          "properties": {
+            "major": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 999
+            },
+            "minor": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 999
+            }
+          },
+          "required": ["major", "minor"],
+          "additionalProperties": false
+        },
+        "server": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string",
+              "pattern": "^[a-z0-9-]{1,64}$"
+            },
+            "version": {
+              "type": "string",
+              "pattern": "^[0-9A-Za-z.+-]{1,32}$"
+            }
+          },
+          "required": ["name", "version"],
+          "additionalProperties": false
+        },
+        "instanceId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+        },
+        "name": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "capabilities": {
+          "maxItems": 64,
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z0-9.-]{1,64}$"
+          }
+        }
+      },
+      "required": [
+        "type",
+        "protocol",
+        "server",
+        "instanceId",
+        "name",
+        "capabilities"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "error"
+        },
+        "id": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_-]{1,64}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "code": {
+          "type": "string",
+          "enum": [
+            "bad_message",
+            "unknown_type",
+            "unauthorized",
+            "revoked",
+            "update_required",
+            "desktop_update_required",
+            "pairing_closed",
+            "pairing_invalid",
+            "pairing_denied",
+            "pairing_timeout",
+            "rate_limited",
+            "not_ready",
+            "stale_queue",
+            "internal"
+          ]
+        },
+        "message": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "supported": {
+          "anyOf": [
+            {
+              "type": "object",
+              "properties": {
+                "min": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "max": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                }
+              },
+              "required": ["min", "max"],
+              "additionalProperties": false
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": ["type", "id", "code", "message", "supported"],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "pair.result"
+        },
+        "deviceId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+        },
+        "token": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_-]{43}$"
+        },
+        "instanceId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+        }
+      },
+      "required": ["type", "deviceId", "token", "instanceId"],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "result"
+        },
+        "id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_-]{1,64}$"
+        }
+      },
+      "required": ["type", "id"],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "state"
+        },
+        "id": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_-]{1,64}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "state": {
+          "type": "object",
+          "properties": {
+            "track": {
+              "anyOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "videoId": {
+                      "type": "string",
+                      "pattern": "^[A-Za-z0-9_-]{11}$"
+                    },
+                    "title": {
+                      "type": "string",
+                      "maxLength": 500
+                    },
+                    "artist": {
+                      "type": "string",
+                      "maxLength": 500
+                    },
+                    "album": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "maxLength": 500
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "durationSeconds": {
+                      "anyOf": [
+                        {
+                          "type": "number",
+                          "minimum": 0,
+                          "maximum": 86400
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "thumbnailUrl": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "maxLength": 2048,
+                          "format": "uri"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "videoId",
+                    "title",
+                    "artist",
+                    "album",
+                    "durationSeconds",
+                    "thumbnailUrl"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "playback": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "enum": ["playing", "paused", "buffering", "stopped"]
+                },
+                "positionSeconds": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 86400
+                }
+              },
+              "required": ["status", "positionSeconds"],
+              "additionalProperties": false
+            },
+            "volume": {
+              "type": "object",
+              "properties": {
+                "volume": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 100
+                },
+                "muted": {
+                  "type": "boolean"
+                }
+              },
+              "required": ["volume", "muted"],
+              "additionalProperties": false
+            },
+            "repeat": {
+              "type": "string",
+              "enum": ["NONE", "ALL", "ONE"]
+            },
+            "shuffle": {
+              "type": "boolean"
+            },
+            "like": {
+              "type": "string",
+              "enum": ["LIKE", "DISLIKE", "INDIFFERENT"]
+            }
+          },
+          "required": [
+            "track",
+            "playback",
+            "volume",
+            "repeat",
+            "shuffle",
+            "like"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": ["type", "id", "state"],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "track.changed"
+        },
+        "track": {
+          "anyOf": [
+            {
+              "type": "object",
+              "properties": {
+                "videoId": {
+                  "type": "string",
+                  "pattern": "^[A-Za-z0-9_-]{11}$"
+                },
+                "title": {
+                  "type": "string",
+                  "maxLength": 500
+                },
+                "artist": {
+                  "type": "string",
+                  "maxLength": 500
+                },
+                "album": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "maxLength": 500
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "durationSeconds": {
+                  "anyOf": [
+                    {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 86400
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "thumbnailUrl": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "maxLength": 2048,
+                      "format": "uri"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "videoId",
+                "title",
+                "artist",
+                "album",
+                "durationSeconds",
+                "thumbnailUrl"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": ["type", "track"],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "playback.changed"
+        },
+        "playback": {
+          "type": "object",
+          "properties": {
+            "status": {
+              "type": "string",
+              "enum": ["playing", "paused", "buffering", "stopped"]
+            },
+            "positionSeconds": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 86400
+            }
+          },
+          "required": ["status", "positionSeconds"],
+          "additionalProperties": false
+        }
+      },
+      "required": ["type", "playback"],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "volume.changed"
+        },
+        "volume": {
+          "type": "object",
+          "properties": {
+            "volume": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 100
+            },
+            "muted": {
+              "type": "boolean"
+            }
+          },
+          "required": ["volume", "muted"],
+          "additionalProperties": false
+        }
+      },
+      "required": ["type", "volume"],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "repeat.changed"
+        },
+        "repeat": {
+          "type": "string",
+          "enum": ["NONE", "ALL", "ONE"]
+        }
+      },
+      "required": ["type", "repeat"],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "shuffle.changed"
+        },
+        "shuffle": {
+          "type": "boolean"
+        }
+      },
+      "required": ["type", "shuffle"],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "like.changed"
+        },
+        "like": {
+          "type": "string",
+          "enum": ["LIKE", "DISLIKE", "INDIFFERENT"]
+        }
+      },
+      "required": ["type", "like"],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "queue.changed"
+        }
+      },
+      "required": ["type"],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "queue"
+        },
+        "id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_-]{1,64}$"
+        },
+        "items": {
+          "maxItems": 500,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "index": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9999
+              },
+              "videoId": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9_-]{11}$"
+              },
+              "title": {
+                "type": "string",
+                "maxLength": 500
+              },
+              "artist": {
+                "type": "string",
+                "maxLength": 500
+              },
+              "durationSeconds": {
+                "anyOf": [
+                  {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 86400
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "thumbnailUrl": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "maxLength": 2048,
+                    "format": "uri"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "isCurrent": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "index",
+              "videoId",
+              "title",
+              "artist",
+              "durationSeconds",
+              "thumbnailUrl",
+              "isCurrent"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "truncated": {
+          "type": "boolean"
+        }
+      },
+      "required": ["type", "id", "items", "truncated"],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "server.closing"
+        },
+        "reason": {
+          "type": "string",
+          "enum": ["shutdown", "disabled", "revoked"]
+        }
+      },
+      "required": ["type", "reason"],
+      "additionalProperties": false
+    }
+  ]
+}

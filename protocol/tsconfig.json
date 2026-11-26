@@ -1,0 +1,12 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "allowImportingTsExtensions": true,
+    "erasableSyntaxOnly": true,
+    "verbatimModuleSyntax": true,
+    // electron's typings pull in @types/node, which is not hoisted in this repo.
+    "types": ["electron"]
+  },
+  "include": ["./**/*.ts"]
+}
