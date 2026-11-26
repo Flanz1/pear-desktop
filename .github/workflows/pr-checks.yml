@@ -24,6 +24,7 @@ jobs:
     outputs:
       protocol: ${{ steps.detect.outputs.protocol }}
       app: ${{ steps.detect.outputs.app }}
+      phone_remote: ${{ steps.detect.outputs.phone_remote }}
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
         with:
@@ -42,6 +43,11 @@ jobs:
             echo "protocol=true" >> "$GITHUB_OUTPUT"
           else
             echo "protocol=false" >> "$GITHUB_OUTPUT"
+          fi
+          if echo "$changed" | grep -qE '^(src/plugins/phone-remote/|protocol/|\.github/workflows/pr-checks\.yml$|package\.json$|pnpm-lock\.yaml$)'; then
+            echo "phone_remote=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "phone_remote=false" >> "$GITHUB_OUTPUT"
           fi
           if echo "$changed" | grep -qE '^(src/|web/|vite-plugins/|patches/|tests/|tools/|assets/|package\.json$|pnpm-lock\.yaml$|pnpm-workspace\.yaml$|electron\.vite\.config\.mts$|electron-builder\.yml$|tsconfig.*\.json$|\.github/workflows/pr-checks\.yml$)'; then
             echo "app=true" >> "$GITHUB_OUTPUT"
@@ -96,6 +102,50 @@ jobs:
       - name: Contract tests
         if: steps.exists.outputs.present == 'true'
         run: node --test 'protocol/tests/*.test.ts'
+
+  phone-remote:
+    name: Phone-remote plugin tests
+    needs: changes
+    if: needs.changes.outputs.phone_remote == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          persist-credentials: false
+
+      - name: Check phone-remote tests exist
+        id: exists
+        run: |
+          if compgen -G 'src/plugins/phone-remote/tests/*.test.ts' > /dev/null; then
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "present=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::No src/plugins/phone-remote/tests/*.test.ts on this branch; skipping."
+          fi
+
+      - name: Install pnpm
+        if: steps.exists.outputs.present == 'true'
+        uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320
+        with:
+          version: 12
+          run_install: false
+
+      - name: Setup NodeJS
+        if: steps.exists.outputs.present == 'true'
+        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        if: steps.exists.outputs.present == 'true'
+        run: pnpm install --frozen-lockfile --ignore-scripts
+
+      - name: Phone-remote tests
+        if: steps.exists.outputs.present == 'true'
+        run: node --test 'src/plugins/phone-remote/tests/*.test.ts'
 
   desktop:
     name: Desktop lint + typecheck + build (${{ matrix.os }})
