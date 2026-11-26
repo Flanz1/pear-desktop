@@ -77,7 +77,11 @@ class RemoteController(
         if (current != null && runningFor == instanceId) return
         stop()
         val creds = store.get(instanceId) ?: run {
-            _status.value = ConnectionStatus.Stopped(null, Failure.Unauthorized)
+            // Keep a more specific reason (e.g. Revoked) for this desktop if we have one.
+            val cur = _status.value
+            if (!(cur is ConnectionStatus.Stopped && cur.desktop?.instanceId == instanceId)) {
+                _status.value = ConnectionStatus.Stopped(null, Failure.Unauthorized)
+            }
             return
         }
         runningFor = instanceId

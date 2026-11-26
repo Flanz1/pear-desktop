@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Pear Remote</string>
+
+    <!-- Desktops -->
+    <string name="desktops_title">Computers</string>
+    <string name="desktops_empty">No computers paired yet. In Pear Desktop, enable Phone remote and click Pair new phone.</string>
+    <string name="desktops_pair">Pair a computer</string>
+    <string name="desktops_forget">Forget</string>
+    <string name="desktops_forget_confirm">Forget %1$s? To remove this phone on the computer too, revoke it in Pear Desktop.</string>
+    <string name="cancel">Cancel</string>
+    <string name="the_computer">the computer</string>
+    <string name="back">Back</string>
+
+    <!-- Pairing -->
+    <string name="pair_title">Pair a computer</string>
+    <string name="pair_intro">In Pear Desktop, click Pair new phone. Then scan the QR code, or enter the computer\'s address and the 6-digit code.</string>
+    <string name="pair_scan">Scan QR code</string>
+    <string name="pair_manual">Enter code instead</string>
+    <string name="pair_discovered">Found on this network</string>
+    <string name="pair_host">Computer address</string>
+    <string name="pair_host_hint">For example 192.168.1.20</string>
+    <string name="pair_port">Port</string>
+    <string name="pair_continue">Continue</string>
+    <string name="pair_bad_host">Enter the IP address shown in Pear Desktop.</string>
+    <string name="pair_bad_port">Enter a port between 1024 and 65535.</string>
+    <string name="pair_checking">Connecting to the computer…</string>
+    <string name="pair_fingerprint_title">Check the computer\'s screen</string>
+    <string name="pair_fingerprint_body">Does Pear Desktop show this fingerprint?</string>
+    <string name="pair_fingerprint_yes">Yes, it matches</string>
+    <string name="pair_fingerprint_no">No</string>
+    <string name="pair_fingerprint_mismatch">Not paired. The fingerprint didn\'t match, so this phone disconnected without sending the code. Make sure you entered the right address.</string>
+    <string name="pair_code">6-digit code</string>
+    <string name="pair_submit">Pair</string>
+    <string name="pair_waiting">Click Allow in Pear Desktop to finish pairing.</string>
+    <string name="pair_done">Paired with %1$s.</string>
+    <string name="pair_try_again">Try again</string>
+    <string name="pair_not_a_code">This isn\'t a Pear Desktop pairing code.</string>
+    <string name="pair_camera_denied">Camera access is needed to scan the code. You can enter the code instead.</string>
+    <string name="pair_no_camera">This device has no camera. Enter the code instead.</string>
+    <string name="scan_hint">Point the camera at the QR code in Pear Desktop.</string>
+
+    <string name="pair_closed">Pairing isn\'t open on the computer. Click Pair new phone in Pear Desktop and try again.</string>
+    <string name="pair_invalid">That code didn\'t match. Check the code in Pear Desktop and try again.</string>
+    <string name="pair_invalid_qr">That QR code has expired. Click Pair new phone in Pear Desktop and scan the new code.</string>
+    <string name="pair_denied">Pairing was declined on the computer. Click Pair new phone in Pear Desktop to try again.</string>
+    <string name="pair_timeout">Pairing timed out. Click Pair new phone in Pear Desktop to start again.</string>
+
+    <!-- Connection states -->
+    <string name="status_connecting">Connecting to %1$s…</string>
+    <string name="status_unreachable">Can\'t reach %1$s. Check that the computer is on, Pear Desktop is running with Phone remote enabled, and this phone is on the same network.</string>
+    <string name="status_retrying">Trying again in %1$d s.</string>
+    <string name="status_identity_changed">This computer\'s identity changed. Pair again.</string>
+    <string name="status_revoked">Access was removed on the computer.</string>
+    <string name="status_unauthorized">This phone is no longer paired with %1$s. Pair again.</string>
+    <string name="status_update_app">Update the app to connect to this computer.</string>
+    <string name="status_update_desktop">Update Pear Desktop on the computer to connect.</string>
+    <string name="status_desktop_shutdown">Pear Desktop was closed on %1$s.</string>
+    <string name="status_desktop_disabled">Phone remote was turned off on %1$s.</string>
+    <string name="status_replaced">This phone connected to %1$s again from another session.</string>
+    <string name="status_rate_limited">Too many commands at once. Reconnecting.</string>
+    <string name="status_protocol_error">Something went wrong talking to %1$s.</string>
+    <string name="status_retry">Retry now</string>
+    <string name="status_pair_again">Pair again</string>
+
+    <!-- Remote -->
+    <string name="remote_nothing_playing">Nothing playing in Pear Desktop.</string>
+    <string name="remote_not_ready">Pear Desktop is still loading.</string>
+    <string name="remote_play">Play</string>
+    <string name="remote_pause">Pause</string>
+    <string name="remote_next">Next</string>
+    <string name="remote_previous">Previous</string>
+    <string name="remote_shuffle_on">Shuffle on</string>
+    <string name="remote_shuffle_off">Shuffle off</string>
+    <string name="remote_repeat_none">Repeat off</string>
+    <string name="remote_repeat_all">Repeat all</string>
+    <string name="remote_repeat_one">Repeat one</string>
+    <string name="remote_like">Like</string>
+    <string name="remote_liked">Liked</string>
+    <string name="remote_dislike">Dislike</string>
+    <string name="remote_disliked">Disliked</string>
+    <string name="remote_volume">Volume</string>
+    <string name="remote_mute">Mute</string>
+    <string name="remote_unmute">Unmute</string>
+    <string name="remote_seek">Position</string>
+    <string name="remote_position_state">%1$s of %2$s</string>
+    <string name="remote_queue">Queue</string>
+    <string name="remote_computers">Computers</string>
+    <string name="remote_album_art">Album art</string>
+    <string name="queue_title">Queue</string>
+    <string name="queue_empty">The queue is empty.</string>
+    <string name="queue_truncated">Showing the first 500 songs.</string>
+    <string name="queue_now_playing">Now playing</string>
+    <string name="queue_changed">The queue changed. Showing the current one.</string>
+    <string name="command_failed">The computer didn\'t respond.</string>
+</resources>
