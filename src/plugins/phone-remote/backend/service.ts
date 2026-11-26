@@ -7,6 +7,8 @@ import { app, safeStorage, type BrowserWindow } from 'electron';
 import { t } from '@/i18n';
 import { LoggerPrefix } from '@/utils';
 
+import { CatalogBridge, encodeThumb, thumbFetch } from './catalog-bridge.ts';
+import { CatalogService } from './catalog.ts';
 import { DeviceStore, type DeviceRecord } from './devices.ts';
 import {
   loadOrCreateIdentity,
@@ -21,6 +23,7 @@ import { PairingController } from './pairing.ts';
 import { PlayerBridge } from './player-bridge.ts';
 import { RemoteServer } from './server.ts';
 import { StateFile, type RemoteState } from './storage.ts';
+import { ThumbnailFetcher } from './thumbnails.ts';
 
 import {
   DESKTOP_SUPPORTED,
@@ -61,6 +64,11 @@ class PhoneRemoteService {
   private identity: TlsIdentity | null = null;
   private server: RemoteServer | null = null;
   private player: PlayerBridge | null = null;
+  private catalogBridge: CatalogBridge | null = null;
+  private readonly thumbnails = new ThumbnailFetcher({
+    fetch: thumbFetch,
+    encode: encodeThumb,
+  });
   private pairing: PairingController | null = null;
   private readonly pairingWindow = new PairingWindow();
   private readonly mdns = new MdnsAdvertiser();
@@ -224,6 +232,12 @@ class PhoneRemoteService {
       this.devices = new DeviceStore(state.devices, (d) => this.saveDevices(d));
       this.player = new PlayerBridge(win);
       this.player.start();
+      this.catalogBridge = new CatalogBridge(win);
+      this.catalogBridge.start();
+      const catalog = new CatalogService({
+        page: this.catalogBridge,
+        thumbs: this.thumbnails,
+      });
       this.pairing = new PairingController((req, signal) =>
         confirmPairingDialog(win, req, signal),
       );
@@ -248,6 +262,7 @@ class PhoneRemoteService {
         devices: this.devices,
         pairing: this.pairing,
         player: this.player,
+        catalog,
         onDevicesChanged: () => this.emit(),
         logger: log,
       });
@@ -286,6 +301,8 @@ class PhoneRemoteService {
     await server?.stop(reason).catch(() => {});
     this.player?.stop();
     this.player = null;
+    this.catalogBridge?.stop();
+    this.catalogBridge = null;
     this.pairing = null;
     this.status = { kind: 'stopped' };
     this.emit();

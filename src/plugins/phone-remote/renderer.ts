@@ -1,15 +1,18 @@
 /**
- * Page bridge: the ONLY module of this plugin that touches YT Music page
- * internals (DOM selectors, Polymer element APIs, the queue store). When
- * YouTube changes the page, this is the file to fix.
+ * Page bridge: with catalog-page.ts, the ONLY module of this plugin that
+ * touches YT Music page internals (DOM selectors, Polymer element APIs, the
+ * queue store). When YouTube changes the player page, this is the file to
+ * fix; catalog-page.ts owns innertube browse/search/playback for the catalog.
  *
  * It reports plain-data snapshots to the backend and answers queue requests.
  * The backend sanitises and validates everything it gets from here.
  */
 import { createRenderer } from '@/utils';
 
+import { createPageEnv, runCatalogRequest } from './catalog-page';
 import { CHANNELS } from './channels';
 
+import type { CatalogRequest } from './catalog-types';
 import type { PhoneRemoteConfig } from './config';
 import type { RendererContext } from '@/types/contexts';
 import type { GetState, QueueItem } from '@/types/datahost-get-state';
@@ -193,6 +196,22 @@ export const renderer = createRenderer<
     ctx.ipc.on(CHANNELS.getQueue, (requestId: unknown) => {
       ctx.ipc.send(CHANNELS.queue, requestId, readQueue());
     });
+    ctx.ipc.on(
+      CHANNELS.catalogRequest,
+      (requestId: unknown, request: CatalogRequest) => {
+        if (typeof requestId !== 'string') return;
+        runCatalogRequest(request, createPageEnv())
+          .then((reply) =>
+            ctx.ipc.send(CHANNELS.catalogReply, requestId, reply),
+          )
+          .catch(() =>
+            ctx.ipc.send(CHANNELS.catalogReply, requestId, {
+              ok: false,
+              code: 'unavailable',
+            }),
+          );
+      },
+    );
     ctx.ipc.on(CHANNELS.clearLike, () => {
       // Clicking the active button clears it (LIKE or DISLIKE -> INDIFFERENT).
       document
@@ -218,6 +237,7 @@ export const renderer = createRenderer<
       CHANNELS.requestSnapshot,
       CHANNELS.getQueue,
       CHANNELS.clearLike,
+      CHANNELS.catalogRequest,
     ]) {
       ctx.ipc.removeAllListeners(ch);
     }

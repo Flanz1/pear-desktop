@@ -2,11 +2,14 @@ import { createServer, type Server } from 'node:https';
 
 import { WebSocketServer, type RawData, type WebSocket } from 'ws';
 
+import { isCatalogCommand, type CatalogHandler } from './catalog.ts';
 import { FailureLimiter, TokenBucket } from './rate-limit.ts';
 
 import {
+  CAPABILITIES,
   CLOSE_CODES,
   LIMITS,
+  isCommandAvailable,
   WS_PATH,
   isLanAddress,
   negotiate,
@@ -31,9 +34,10 @@ import type { z } from 'zod';
 
 export type QueueItem = z.infer<typeof QueueItemSchema>;
 
+/** Commands the player executes: everything but state/queue reads and the catalog. */
 export type ControlCommand = Exclude<
   ClientCommand,
-  { type: 'state.get' } | { type: 'queue.get' }
+  { type: 'state.get' | 'queue.get' | `catalog.${string}` }
 >;
 
 /** What the server needs from the player. Implemented by player-bridge.ts. */
@@ -60,6 +64,8 @@ export interface RemoteServerOptions {
   devices: DeviceStore;
   pairing: PairingController;
   player: PlayerPort;
+  /** 1.1 catalog. Without it, no catalog capability is advertised. */
+  catalog?: CatalogHandler;
   /** Called after any device record changes (pairing, last seen, revoke). */
   onDevicesChanged?: () => void;
   logger?: Logger;
@@ -82,6 +88,8 @@ interface Conn {
   /** Set after `welcome`. */
   deviceId: string | null;
   protocol: ProtocolVersion | null;
+  /** Advertised in `welcome`; fixed for the connection. */
+  capabilities: string[];
   invalidCount: number;
   bucket: TokenBucket;
   lastActivity: number;
@@ -191,6 +199,7 @@ export class RemoteServer {
     this.unsubscribe = null;
     if (this.sweeper) clearInterval(this.sweeper);
     this.sweeper = null;
+    this.opts.catalog?.clear();
     for (const c of [...this.conns]) {
       if (c.deviceId) this.send(c, { type: 'server.closing', reason });
       this.close(c, CLOSE_CODES.goingAway);
@@ -207,6 +216,7 @@ export class RemoteServer {
 
   /** SPEC 6.4: notify and close a revoked device's live connection. */
   disconnectDevice(deviceId: string) {
+    this.opts.catalog?.forgetDevice(deviceId);
     for (const c of this.conns) {
       if (c.deviceId === deviceId) {
         this.send(c, { type: 'server.closing', reason: 'revoked' });
@@ -229,6 +239,7 @@ export class RemoteServer {
       address,
       deviceId: null,
       protocol: null,
+      capabilities: [],
       invalidCount: 0,
       bucket: new TokenBucket(),
       lastActivity: Date.now(),
@@ -336,6 +347,7 @@ export class RemoteServer {
       }
     }
     conn.deviceId = record.deviceId;
+    conn.capabilities = this.capabilitiesFor(conn.protocol!);
     this.opts.devices.touch(record.deviceId);
     this.opts.onDevicesChanged?.();
     this.send(conn, {
@@ -347,7 +359,7 @@ export class RemoteServer {
       },
       instanceId: this.opts.instanceId,
       name: this.opts.name.slice(0, LIMITS.textMax),
-      capabilities: [],
+      capabilities: conn.capabilities,
     });
     this.sendState(conn, null);
   }
@@ -430,7 +442,40 @@ export class RemoteServer {
       return;
     }
 
+    // SPEC 4.1 / 10.1: a known command not available in this session.
+    // Not an invalid message.
+    if (!isCommandAvailable(cmd.type, conn.protocol!, conn.capabilities)) {
+      this.sendError(conn, cmd.id, 'unknown_type', 'Not available');
+      return;
+    }
+
     const player = this.opts.player;
+    if (isCatalogCommand(cmd)) {
+      const catalog = this.opts.catalog;
+      if (!catalog) {
+        this.sendError(conn, cmd.id, 'unknown_type', 'Not available');
+        return;
+      }
+      // Covers don't need the page; everything else does.
+      if (cmd.type !== 'catalog.thumb' && !player.getState()) {
+        this.sendError(conn, cmd.id, 'not_ready', 'Player not loaded');
+        return;
+      }
+      const answer = await catalog
+        .handle(conn.deviceId!, cmd, {
+          currentVideoId: player.getState()?.track?.videoId ?? null,
+        })
+        .catch(() => ({
+          error: 'internal' as const,
+          message: 'Internal error',
+        }));
+      if ('error' in answer) {
+        this.sendError(conn, cmd.id, answer.error, answer.message);
+      } else if (!this.send(conn, answer)) {
+        this.sendError(conn, cmd.id, 'internal', 'Answer could not be sent');
+      }
+      return;
+    }
     if (cmd.type === 'state.get') {
       if (!player.getState()) {
         this.sendError(conn, cmd.id, 'not_ready', 'Player not loaded');
@@ -445,7 +490,10 @@ export class RemoteServer {
         this.sendError(conn, cmd.id, 'not_ready', 'Player not loaded');
         return;
       }
-      this.send(conn, { type: 'queue', id: cmd.id, ...queue });
+      this.send(
+        conn,
+        this.decorate(conn, { type: 'queue', id: cmd.id, ...queue }),
+      );
       return;
     }
     if (!player.getState()) {
@@ -464,11 +512,60 @@ export class RemoteServer {
   private sendState(conn: Conn, id: string | null) {
     const state = this.opts.player.getState();
     if (!state) return;
-    this.send(conn, { type: 'state', id, state });
+    this.send(conn, this.decorate(conn, { type: 'state', id, state }));
   }
 
+  /** Per connection, because `thumb` depends on the session and refs are per device. */
   private broadcast(msg: ServerMessage) {
-    for (const c of this.conns) if (c.deviceId) this.send(c, msg);
+    for (const c of this.conns)
+      if (c.deviceId) this.send(c, this.decorate(c, msg));
+  }
+
+  private capabilitiesFor(version: ProtocolVersion): string[] {
+    if (!this.opts.catalog || version.minor < 1) return [];
+    return [
+      CAPABILITIES.catalogBrowse,
+      CAPABILITIES.catalogSearch,
+      CAPABILITIES.catalogThumbnails,
+    ];
+  }
+
+  /**
+   * SPEC 7: `thumb` on Track / QueueItem is omitted in 1.0 sessions; in 1.1
+   * sessions with a catalog it is a ref for this device, or null.
+   */
+  private decorate(conn: Conn, msg: ServerMessage): ServerMessage {
+    const withThumb =
+      (conn.protocol?.minor ?? 0) >= 1 && this.opts.catalog !== undefined;
+    const thumbs = conn.capabilities.includes(CAPABILITIES.catalogThumbnails);
+    const track = <T extends { thumbnailUrl: string | null; thumb?: unknown }>(
+      t: T,
+    ): T => {
+      const rest: T = { ...t };
+      delete rest.thumb;
+      if (!withThumb) return rest;
+      rest.thumb =
+        thumbs && conn.deviceId
+          ? this.opts.catalog!.thumbFor(conn.deviceId, t.thumbnailUrl)
+          : null;
+      return rest;
+    };
+    switch (msg.type) {
+      case 'track.changed':
+        return { ...msg, track: msg.track ? track(msg.track) : null };
+      case 'state':
+        return {
+          ...msg,
+          state: {
+            ...msg.state,
+            track: msg.state.track ? track(msg.state.track) : null,
+          },
+        };
+      case 'queue':
+        return { ...msg, items: msg.items.map(track) };
+      default:
+        return msg;
+    }
   }
 
   private sendError(
@@ -480,8 +577,9 @@ export class RemoteServer {
     this.send(conn, { type: 'error', id, code, message, supported: null });
   }
 
-  private send(conn: Conn, msg: ServerMessage) {
-    if (conn.ws.readyState !== conn.ws.OPEN) return;
+  /** False if the message was dropped (closed socket, invalid or oversize). */
+  private send(conn: Conn, msg: ServerMessage): boolean {
+    if (conn.ws.readyState !== conn.ws.OPEN) return false;
     const checked = ServerMessageSchema.safeParse(msg);
     if (!checked.success) {
       // Log only the type and issue paths, never the message itself.
@@ -490,14 +588,15 @@ export class RemoteServer {
         msg.type,
         checked.error.issues.map((i) => i.path.join('.')),
       );
-      return;
+      return false;
     }
     const json = JSON.stringify(checked.data);
     if (Buffer.byteLength(json, 'utf8') > LIMITS.serverMessageBytes) {
       this.log.warn('phone-remote: dropped oversize outgoing', msg.type);
-      return;
+      return false;
     }
     conn.ws.send(json);
+    return true;
   }
 
   private close(conn: Conn, code: number) {
