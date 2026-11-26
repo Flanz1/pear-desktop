@@ -212,6 +212,21 @@ export const renderer = createRenderer<
           );
       },
     );
+    ctx.ipc.on(CHANNELS.setVolume, (volume: unknown) => {
+      const api = bridge.api;
+      if (!api || typeof volume !== 'number' || !Number.isFinite(volume)) {
+        return;
+      }
+      const v = Math.min(100, Math.max(0, Math.round(volume)));
+      api.setVolume(v);
+      // Keep YT Music's own sliders in step, as the precise-volume plugin
+      // does, so the page doesn't later reapply its old slider value.
+      for (const sel of ['#volume-slider', '#expand-volume-slider']) {
+        const slider = document.querySelector<HTMLInputElement>(sel);
+        if (slider) slider.value = String(v > 0 && v < 5 ? 5 : v);
+      }
+      scheduleSnapshot();
+    });
     ctx.ipc.on(CHANNELS.clearLike, () => {
       // Clicking the active button clears it (LIKE or DISLIKE -> INDIFFERENT).
       document

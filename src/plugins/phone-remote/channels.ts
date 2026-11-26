@@ -5,6 +5,7 @@ export const CHANNELS = {
   getQueue: 'phone-remote:get-queue',
   queue: 'phone-remote:queue',
   clearLike: 'phone-remote:clear-like',
+  setVolume: 'phone-remote:set-volume',
   catalogRequest: 'phone-remote:catalog-request',
   catalogReply: 'phone-remote:catalog-reply',
 } as const;

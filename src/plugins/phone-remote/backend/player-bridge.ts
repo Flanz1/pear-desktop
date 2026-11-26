@@ -180,7 +180,10 @@ export class PlayerBridge implements PlayerPort {
         break;
       }
       case 'player.setVolume':
-        c.setVolume(cmd.volume);
+        // Through the page's player API, not the player bar's updateVolume:
+        // that path snaps to the bar slider's steps, so the reported volume
+        // drifted away from what the phone set.
+        this.win.webContents.send(CHANNELS.setVolume, cmd.volume);
         break;
       case 'player.setMuted':
         if (page.muted !== cmd.muted) c.muteUnmute();
