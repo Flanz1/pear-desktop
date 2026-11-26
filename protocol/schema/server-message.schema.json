@@ -1,6 +1,6 @@
 {
   "$id": "https://github.com/Flanz1/pear-desktop/protocol/schema/server-message.schema.json",
-  "title": "Message from the desktop (protocol 1.0)",
+  "title": "Message from the desktop (protocol 1.1)",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "oneOf": [
     {
@@ -24,7 +24,10 @@
               "maximum": 999
             }
           },
-          "required": ["major", "minor"],
+          "required": [
+            "major",
+            "minor"
+          ],
           "additionalProperties": false
         },
         "server": {
@@ -39,7 +42,10 @@
               "pattern": "^[0-9A-Za-z.+-]{1,32}$"
             }
           },
-          "required": ["name", "version"],
+          "required": [
+            "name",
+            "version"
+          ],
           "additionalProperties": false
         },
         "instanceId": {
@@ -104,7 +110,10 @@
             "rate_limited",
             "not_ready",
             "stale_queue",
-            "internal"
+            "internal",
+            "not_found",
+            "signed_out",
+            "unavailable"
           ]
         },
         "message": {
@@ -127,7 +136,10 @@
                   "maximum": 9007199254740991
                 }
               },
-              "required": ["min", "max"],
+              "required": [
+                "min",
+                "max"
+              ],
               "additionalProperties": false
             },
             {
@@ -136,7 +148,13 @@
           ]
         }
       },
-      "required": ["type", "id", "code", "message", "supported"],
+      "required": [
+        "type",
+        "id",
+        "code",
+        "message",
+        "supported"
+      ],
       "additionalProperties": false
     },
     {
@@ -161,7 +179,12 @@
           "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
         }
       },
-      "required": ["type", "deviceId", "token", "instanceId"],
+      "required": [
+        "type",
+        "deviceId",
+        "token",
+        "instanceId"
+      ],
       "additionalProperties": false
     },
     {
@@ -176,7 +199,10 @@
           "pattern": "^[A-Za-z0-9_-]{1,64}$"
         }
       },
-      "required": ["type", "id"],
+      "required": [
+        "type",
+        "id"
+      ],
       "additionalProperties": false
     },
     {
@@ -251,6 +277,17 @@
                           "type": "null"
                         }
                       ]
+                    },
+                    "thumb": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "pattern": "^[A-Za-z0-9_-]{16,32}$"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
                     }
                   },
                   "required": [
@@ -273,7 +310,12 @@
               "properties": {
                 "status": {
                   "type": "string",
-                  "enum": ["playing", "paused", "buffering", "stopped"]
+                  "enum": [
+                    "playing",
+                    "paused",
+                    "buffering",
+                    "stopped"
+                  ]
                 },
                 "positionSeconds": {
                   "type": "number",
@@ -281,7 +323,10 @@
                   "maximum": 86400
                 }
               },
-              "required": ["status", "positionSeconds"],
+              "required": [
+                "status",
+                "positionSeconds"
+              ],
               "additionalProperties": false
             },
             "volume": {
@@ -296,19 +341,30 @@
                   "type": "boolean"
                 }
               },
-              "required": ["volume", "muted"],
+              "required": [
+                "volume",
+                "muted"
+              ],
               "additionalProperties": false
             },
             "repeat": {
               "type": "string",
-              "enum": ["NONE", "ALL", "ONE"]
+              "enum": [
+                "NONE",
+                "ALL",
+                "ONE"
+              ]
             },
             "shuffle": {
               "type": "boolean"
             },
             "like": {
               "type": "string",
-              "enum": ["LIKE", "DISLIKE", "INDIFFERENT"]
+              "enum": [
+                "LIKE",
+                "DISLIKE",
+                "INDIFFERENT"
+              ]
             }
           },
           "required": [
@@ -322,7 +378,11 @@
           "additionalProperties": false
         }
       },
-      "required": ["type", "id", "state"],
+      "required": [
+        "type",
+        "id",
+        "state"
+      ],
       "additionalProperties": false
     },
     {
@@ -383,6 +443,17 @@
                       "type": "null"
                     }
                   ]
+                },
+                "thumb": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "pattern": "^[A-Za-z0-9_-]{16,32}$"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
                 }
               },
               "required": [
@@ -401,7 +472,10 @@
           ]
         }
       },
-      "required": ["type", "track"],
+      "required": [
+        "type",
+        "track"
+      ],
       "additionalProperties": false
     },
     {
@@ -416,7 +490,12 @@
           "properties": {
             "status": {
               "type": "string",
-              "enum": ["playing", "paused", "buffering", "stopped"]
+              "enum": [
+                "playing",
+                "paused",
+                "buffering",
+                "stopped"
+              ]
             },
             "positionSeconds": {
               "type": "number",
@@ -424,11 +503,17 @@
               "maximum": 86400
             }
           },
-          "required": ["status", "positionSeconds"],
+          "required": [
+            "status",
+            "positionSeconds"
+          ],
           "additionalProperties": false
         }
       },
-      "required": ["type", "playback"],
+      "required": [
+        "type",
+        "playback"
+      ],
       "additionalProperties": false
     },
     {
@@ -450,11 +535,17 @@
               "type": "boolean"
             }
           },
-          "required": ["volume", "muted"],
+          "required": [
+            "volume",
+            "muted"
+          ],
           "additionalProperties": false
         }
       },
-      "required": ["type", "volume"],
+      "required": [
+        "type",
+        "volume"
+      ],
       "additionalProperties": false
     },
     {
@@ -466,10 +557,17 @@
         },
         "repeat": {
           "type": "string",
-          "enum": ["NONE", "ALL", "ONE"]
+          "enum": [
+            "NONE",
+            "ALL",
+            "ONE"
+          ]
         }
       },
-      "required": ["type", "repeat"],
+      "required": [
+        "type",
+        "repeat"
+      ],
       "additionalProperties": false
     },
     {
@@ -483,7 +581,10 @@
           "type": "boolean"
         }
       },
-      "required": ["type", "shuffle"],
+      "required": [
+        "type",
+        "shuffle"
+      ],
       "additionalProperties": false
     },
     {
@@ -495,10 +596,17 @@
         },
         "like": {
           "type": "string",
-          "enum": ["LIKE", "DISLIKE", "INDIFFERENT"]
+          "enum": [
+            "LIKE",
+            "DISLIKE",
+            "INDIFFERENT"
+          ]
         }
       },
-      "required": ["type", "like"],
+      "required": [
+        "type",
+        "like"
+      ],
       "additionalProperties": false
     },
     {
@@ -509,7 +617,9 @@
           "const": "queue.changed"
         }
       },
-      "required": ["type"],
+      "required": [
+        "type"
+      ],
       "additionalProperties": false
     },
     {
@@ -572,6 +682,17 @@
               },
               "isCurrent": {
                 "type": "boolean"
+              },
+              "thumb": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "pattern": "^[A-Za-z0-9_-]{16,32}$"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               }
             },
             "required": [
@@ -590,7 +711,12 @@
           "type": "boolean"
         }
       },
-      "required": ["type", "id", "items", "truncated"],
+      "required": [
+        "type",
+        "id",
+        "items",
+        "truncated"
+      ],
       "additionalProperties": false
     },
     {
@@ -602,10 +728,356 @@
         },
         "reason": {
           "type": "string",
-          "enum": ["shutdown", "disabled", "revoked"]
+          "enum": [
+            "shutdown",
+            "disabled",
+            "revoked"
+          ]
         }
       },
-      "required": ["type", "reason"],
+      "required": [
+        "type",
+        "reason"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "catalog.page"
+        },
+        "id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_-]{1,64}$"
+        },
+        "title": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "subtitle": {
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 500
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "header": {
+          "anyOf": [
+            {
+              "type": "object",
+              "properties": {
+                "kind": {
+                  "type": "string",
+                  "enum": [
+                    "album",
+                    "playlist",
+                    "artist"
+                  ]
+                },
+                "title": {
+                  "type": "string",
+                  "maxLength": 500
+                },
+                "subtitle": {
+                  "type": "string",
+                  "maxLength": 500
+                },
+                "thumb": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "pattern": "^[A-Za-z0-9_-]{16,32}$"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "ref": {
+                  "type": "string",
+                  "pattern": "^[A-Za-z0-9_-]{16,32}$"
+                },
+                "actions": {
+                  "maxItems": 2,
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "enum": [
+                      "play",
+                      "shuffle"
+                    ]
+                  }
+                }
+              },
+              "required": [
+                "kind",
+                "title",
+                "subtitle",
+                "thumb",
+                "ref",
+                "actions"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "chips": {
+          "maxItems": 20,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "title": {
+                "type": "string",
+                "maxLength": 500
+              },
+              "ref": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9_-]{16,32}$"
+              }
+            },
+            "required": [
+              "title",
+              "ref"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "sections": {
+          "maxItems": 30,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "title": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "maxLength": 500
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "layout": {
+                "type": "string",
+                "enum": [
+                  "carousel",
+                  "list",
+                  "grid"
+                ]
+              },
+              "items": {
+                "minItems": 1,
+                "maxItems": 100,
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "ref": {
+                      "type": "string",
+                      "pattern": "^[A-Za-z0-9_-]{16,32}$"
+                    },
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "song",
+                        "video",
+                        "album",
+                        "single",
+                        "playlist",
+                        "artist",
+                        "episode",
+                        "station"
+                      ]
+                    },
+                    "title": {
+                      "type": "string",
+                      "maxLength": 500
+                    },
+                    "subtitle": {
+                      "type": "string",
+                      "maxLength": 500
+                    },
+                    "durationSeconds": {
+                      "anyOf": [
+                        {
+                          "type": "number",
+                          "minimum": 0,
+                          "maximum": 86400
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "explicit": {
+                      "type": "boolean"
+                    },
+                    "actions": {
+                      "minItems": 1,
+                      "maxItems": 5,
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "enum": [
+                          "open",
+                          "play",
+                          "shuffle",
+                          "playNext",
+                          "addToQueue"
+                        ]
+                      }
+                    },
+                    "thumb": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "pattern": "^[A-Za-z0-9_-]{16,32}$"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "isCurrent": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "ref",
+                    "kind",
+                    "title",
+                    "subtitle",
+                    "durationSeconds",
+                    "explicit",
+                    "actions",
+                    "thumb",
+                    "isCurrent"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            },
+            "required": [
+              "title",
+              "layout",
+              "items"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "append": {
+          "anyOf": [
+            {
+              "type": "string",
+              "enum": [
+                "sections",
+                "items"
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "continuation": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_-]{16,32}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "type",
+        "id",
+        "title",
+        "subtitle",
+        "header",
+        "chips",
+        "sections",
+        "append",
+        "continuation"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "catalog.suggestions"
+        },
+        "id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_-]{1,64}$"
+        },
+        "items": {
+          "maxItems": 10,
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 150
+          }
+        }
+      },
+      "required": [
+        "type",
+        "id",
+        "items"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "catalog.thumb"
+        },
+        "id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_-]{1,64}$"
+        },
+        "mime": {
+          "type": "string",
+          "enum": [
+            "image/jpeg",
+            "image/webp",
+            "image/png"
+          ]
+        },
+        "data": {
+          "type": "string",
+          "minLength": 4,
+          "maxLength": 32768,
+          "format": "base64",
+          "contentEncoding": "base64",
+          "pattern": "^$|^(?:[0-9a-zA-Z+/]{4})*(?:(?:[0-9a-zA-Z+/]{2}==)|(?:[0-9a-zA-Z+/]{3}=))?$"
+        }
+      },
+      "required": [
+        "type",
+        "id",
+        "mime",
+        "data"
+      ],
       "additionalProperties": false
     }
   ]

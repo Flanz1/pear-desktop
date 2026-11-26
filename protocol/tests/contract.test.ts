@@ -23,6 +23,12 @@ import {
   DESKTOP_SUPPORTED,
   ServerMessageSchema,
   shortFingerprint,
+  CAPABILITIES,
+  COMMAND_REQUIREMENTS,
+  isCommandAvailable,
+  TrackSchema,
+  QueueItemSchema,
+  CatalogPageSchema,
 } from '../src/index.ts';
 
 import type { z } from 'zod';
@@ -168,6 +174,160 @@ describe('raw parsing', () => {
       truncated: true,
     });
     assert.ok(parseServerMessage(msg).ok);
+  });
+});
+
+describe('catalog (1.1)', () => {
+  const ref = 'Q2F0YWxvZ1JlZjAwMDAx';
+  const track = {
+    videoId: 'dQw4w9WgXcQ',
+    title: 't',
+    artist: 'a',
+    album: null,
+    durationSeconds: null,
+    thumbnailUrl: null,
+  };
+  it('Track accepts 1.0 shape (no thumb) and 1.1 shape (thumb ref or null)', () => {
+    assert.ok(TrackSchema.safeParse(track).success);
+    assert.ok(TrackSchema.safeParse({ ...track, thumb: null }).success);
+    assert.ok(TrackSchema.safeParse({ ...track, thumb: ref }).success);
+    assert.equal(
+      TrackSchema.safeParse({ ...track, thumb: 'not a ref' }).success,
+      false,
+    );
+  });
+  it('QueueItem accepts both shapes', () => {
+    const item = {
+      index: 0,
+      videoId: 'dQw4w9WgXcQ',
+      title: 't',
+      artist: 'a',
+      durationSeconds: null,
+      thumbnailUrl: null,
+      isCurrent: false,
+    };
+    assert.ok(QueueItemSchema.safeParse(item).success);
+    assert.ok(QueueItemSchema.safeParse({ ...item, thumb: ref }).success);
+  });
+  it('every catalog command has a requirement, every requirement a command', () => {
+    const catalogTypes = ClientCommandSchema.options
+      .map((o) => o.shape.type.value as string)
+      .filter((t) => t.startsWith('catalog.'));
+    assert.deepEqual(
+      [...catalogTypes].sort(),
+      Object.keys(COMMAND_REQUIREMENTS).sort(),
+    );
+  });
+  it('gates catalog commands by negotiated minor and capability', () => {
+    const all = Object.values(CAPABILITIES);
+    assert.equal(
+      isCommandAvailable('catalog.browse', { major: 1, minor: 0 }, all),
+      false,
+    );
+    assert.equal(
+      isCommandAvailable('catalog.browse', { major: 1, minor: 1 }, []),
+      false,
+    );
+    assert.equal(
+      isCommandAvailable('catalog.browse', { major: 1, minor: 1 }, all),
+      true,
+    );
+    assert.equal(
+      isCommandAvailable('catalog.thumb', { major: 1, minor: 1 }, [
+        CAPABILITIES.catalogBrowse,
+      ]),
+      false,
+    );
+    // 1.0 commands are always available.
+    assert.equal(
+      isCommandAvailable('player.play', { major: 1, minor: 0 }, []),
+      true,
+    );
+  });
+  it('trims the search query before checking it', () => {
+    const r = ClientCommandSchema.safeParse({
+      type: 'catalog.search',
+      id: 'a',
+      query: '  rick  ',
+      filter: 'top',
+      continuation: null,
+    });
+    assert.ok(r.success);
+    assert.equal((r.data as { query: string }).query, 'rick');
+  });
+  it('a worst-case search command fits the client message limit', () => {
+    // 150 code units that each take 6 bytes if the encoder escapes them (\uXXXX).
+    const query = '\\u00e9'.repeat(LIMITS.catalogQueryMax);
+    const msg = JSON.stringify({
+      type: 'catalog.search',
+      id: 'a'.repeat(64),
+      query: 'é'.repeat(LIMITS.catalogQueryMax),
+      filter: 'playlists',
+      continuation: 'A'.repeat(LIMITS.refMaxLength),
+    }).replace('é'.repeat(LIMITS.catalogQueryMax), query);
+    assert.ok(Buffer.byteLength(msg) < LIMITS.clientMessageBytes);
+    assert.ok(parseClientCommand(msg).ok);
+  });
+  it('a max-size thumbnail fits the server message limit', () => {
+    const data = Buffer.alloc(LIMITS.thumbMaxBytes).toString('base64');
+    const msg = JSON.stringify({
+      type: 'catalog.thumb',
+      id: 'a'.repeat(64),
+      mime: 'image/jpeg',
+      data,
+    });
+    assert.ok(parseServerMessage(msg).ok);
+    const over = Buffer.alloc(LIMITS.thumbMaxBytes + 1).toString('base64');
+    assert.equal(
+      ServerMessageSchema.safeParse({
+        type: 'catalog.thumb',
+        id: 'a',
+        mime: 'image/jpeg',
+        data: over,
+      }).success,
+      false,
+    );
+  });
+  const pageWith = (sections: number, items: number, textLen: number) => ({
+    type: 'catalog.page',
+    id: 'a'.repeat(64),
+    title: 'x'.repeat(textLen),
+    subtitle: null,
+    header: null,
+    chips: [],
+    sections: Array.from({ length: sections }, () => ({
+      title: 'x'.repeat(textLen),
+      layout: 'carousel',
+      items: Array.from({ length: items }, () => ({
+        ref: 'A'.repeat(LIMITS.refMaxLength),
+        kind: 'playlist',
+        title: 'x'.repeat(textLen),
+        subtitle: 'x'.repeat(textLen),
+        durationSeconds: 86400,
+        explicit: true,
+        actions: ['open', 'play', 'shuffle', 'playNext', 'addToQueue'],
+        thumb: 'A'.repeat(LIMITS.refMaxLength),
+        isCurrent: false,
+      })),
+    })),
+    append: null,
+    continuation: 'A'.repeat(LIMITS.refMaxLength),
+  });
+  it('a large realistic page (30 shelves x 25 items, 100-char text) fits', () => {
+    const msg = JSON.stringify(pageWith(30, 25, 100));
+    assert.ok(parseServerMessage(msg).ok);
+  });
+  it('a page at every count limit with max-length text exceeds 1 MiB, so the desktop must trim', () => {
+    const page = pageWith(
+      LIMITS.catalogSectionsMax,
+      LIMITS.catalogItemsMax,
+      LIMITS.textMax,
+    );
+    assert.ok(CatalogPageSchema.safeParse(page).success);
+    assert.deepEqual(parseServerMessage(JSON.stringify(page)), {
+      ok: false,
+      reason: 'too_large',
+    });
   });
 });
 
