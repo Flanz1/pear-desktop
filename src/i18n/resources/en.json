@@ -698,6 +698,59 @@
       "description": "Improve performance by enabling experimental scripts",
       "name": "Performance improvement [Beta]"
     },
+    "phone-remote": {
+      "name": "Phone Remote",
+      "description": "Control playback from your phone over your local network. Phones must be paired and approved on this computer.",
+      "menu": {
+        "status": {
+          "running": "Listening on {{address}}",
+          "stopped": "Not running",
+          "no-lan": "No local network found",
+          "error": "Could not start (see logs)"
+        },
+        "pair": "Pair new phone…",
+        "devices": "Paired phones ({{count}})",
+        "no-devices": "No paired phones",
+        "connected": "connected",
+        "paired-at": "Paired: {{date}}",
+        "last-seen": "Last seen: {{date}}",
+        "never": "never",
+        "revoke": "Revoke access",
+        "port": "Port",
+        "interface": "Network interface",
+        "interface-auto": "Automatic",
+        "reset": "Reset remote identity…"
+      },
+      "pairing": {
+        "title": "Pair a phone",
+        "scan": "Scan this code with the Pear Remote app.",
+        "manual": "Can't scan? Enter this computer's address and the code below in the app.",
+        "code": "Pairing code",
+        "fingerprint": "Check the app shows:",
+        "address": "Address:",
+        "expires": "Expires in",
+        "cancel": "Cancel",
+        "waiting": "Answer the prompt on this computer to finish pairing."
+      },
+      "confirm": {
+        "title": "Allow phone?",
+        "message": "Allow {{name}} ({{model}}, {{address}}) to control playback?",
+        "detail": "Only allow a phone you are pairing right now.",
+        "unknown-model": "unknown model",
+        "allow": "Allow",
+        "deny": "Deny"
+      },
+      "revoke": {
+        "message": "Remove access for {{name}}? It will be disconnected and has to be paired again.",
+        "confirm": "Revoke",
+        "cancel": "Cancel"
+      },
+      "reset": {
+        "message": "Reset this computer's remote identity?",
+        "detail": "This creates a new security key and removes every paired phone. Each phone has to pair again.",
+        "confirm": "Reset"
+      }
+    },
     "picture-in-picture": {
       "description": "Allows to switch the app to picture-in-picture mode",
       "menu": {
