@@ -390,7 +390,7 @@ fun LazyListScope.sections(
                     contentPadding = PaddingValues(horizontal = 12.dp),
                     horizontalArrangement = Arrangement.spacedBy(4.dp),
                 ) {
-                    androidx.compose.foundation.lazy.itemsIndexed(items, key = { i, _ -> "s$si-$i" }) { _, it ->
+                    itemsIndexed(items, key = { i, _ -> "s$si-$i" }) { _, it ->
                         ItemTile(h, it, cb)
                     }
                 }

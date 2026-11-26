@@ -39,7 +39,8 @@ class Thumbnails(
     private val permits = Semaphore(maxInFlight)
     private var generation = 0
 
-    private class Pending(val deferred: Deferred<ByteArray?>) {
+    private class Pending {
+        lateinit var deferred: Deferred<ByteArray?>
         var waiters = 0
     }
 
@@ -56,7 +57,7 @@ class Thumbnails(
             if (failed.containsKey(ref)) return null
             val gen = generation
             inFlight.getOrPut(ref) {
-                Pending(scope.async(start = CoroutineStart.LAZY) { fetchOne(ref, gen) })
+                Pending().also { p -> p.deferred = scope.async(start = CoroutineStart.LAZY) { fetchOne(ref, gen, p) } }
             }.also { it.waiters++ }
         }
         try {
@@ -73,7 +74,7 @@ class Thumbnails(
         }
     }
 
-    private suspend fun fetchOne(ref: String, gen: Int): ByteArray? {
+    private suspend fun fetchOne(ref: String, gen: Int, self: Pending): ByteArray? {
         try {
             val r = permits.withPermit { fetch(ref) }
             val bytes = when (r) {
@@ -88,7 +89,7 @@ class Thumbnails(
             if (bytes != null) synchronized(lock) { if (gen == generation) cache[ref] = bytes }
             return bytes
         } finally {
-            synchronized(lock) { inFlight.remove(ref) }
+            synchronized(lock) { if (inFlight[ref] === self) inFlight.remove(ref) }
         }
     }
 
