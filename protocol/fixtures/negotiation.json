@@ -106,6 +106,57 @@
           "max": 1
         }
       }
+    },
+    {
+      "name": "1.1 phone, 1.0 desktop: no catalog",
+      "client": {
+        "major": 1,
+        "minor": 1
+      },
+      "supported": {
+        "1": 0
+      },
+      "expect": {
+        "ok": true,
+        "version": {
+          "major": 1,
+          "minor": 0
+        }
+      }
+    },
+    {
+      "name": "1.0 phone, 1.1 desktop: no catalog",
+      "client": {
+        "major": 1,
+        "minor": 0
+      },
+      "supported": {
+        "1": 1
+      },
+      "expect": {
+        "ok": true,
+        "version": {
+          "major": 1,
+          "minor": 0
+        }
+      }
+    },
+    {
+      "name": "1.1 both sides",
+      "client": {
+        "major": 1,
+        "minor": 1
+      },
+      "supported": {
+        "1": 1
+      },
+      "expect": {
+        "ok": true,
+        "version": {
+          "major": 1,
+          "minor": 1
+        }
+      }
     }
   ]
 }

@@ -20,6 +20,25 @@ export const LIMITS = {
   /** Max length of human-readable strings (titles, names). */
   textMax: 500,
   deviceNameMax: 64,
+  /** Catalog (1.1): max sections in one `catalog.page`. */
+  catalogSectionsMax: 30,
+  /** Catalog (1.1): max items in one section. */
+  catalogItemsMax: 100,
+  /** Catalog (1.1): max chips (mood/genre shortcuts) in one `catalog.page`. */
+  catalogChipsMax: 20,
+  /** Catalog (1.1): max entries in `catalog.suggestions`. */
+  catalogSuggestionsMax: 10,
+  /** Catalog (1.1): max length of a search query and of one suggestion, in UTF-16 code units. */
+  catalogQueryMax: 150,
+  /** Catalog (1.1): opaque ref / cursor length, base64url chars (16 chars = 96 bits). */
+  refMinLength: 16,
+  refMaxLength: 32,
+  /** Catalog (1.1): a ref stays valid this long after the desktop last sent it to the device. */
+  refTtlMs: 30 * 60 * 1000,
+  /** Catalog (1.1): max decoded size of one `catalog.thumb` image, in bytes. */
+  thumbMaxBytes: 24 * 1024,
+  /** Catalog (1.1): max width and height of one `catalog.thumb` image, in pixels. */
+  thumbMaxPixels: 160,
   /** Default TCP port for the listener. */
   defaultPort: 26539,
 } as const;

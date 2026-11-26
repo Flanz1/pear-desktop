@@ -4,7 +4,8 @@ The desktop ↔ phone contract for the Pear Remote plugin. Owned by the protocol
 agent; the desktop plugin and the Android app implement it but don't change it.
 
 - [`SPEC.md`](SPEC.md): transport, discovery, versioning, pairing,
-  authentication, messages, limits, and what each side implements.
+  authentication, messages, limits, the 1.1 catalog (browse, search,
+  thumbnails), and what each side implements.
 - `src/`: zod schemas (the normative message definitions), version
   negotiation, pairing URI parsing, limits and close codes. The desktop imports
   these directly.
@@ -35,6 +36,9 @@ Fixture files share one shape:
 { "description": "...", "valid": [{ "name": "...", "value": {} }], "invalid": [...] }
 ```
 
+`client-command.json` and `server-message.json` include the 1.1 catalog
+entries (`catalog.*`, the new error codes, and `thumb` on Track/QueueItem); a
+1.1 implementation must pass all of them, a 1.0 one only the others.
 `pairing-uri.json` uses `uri` (and `payload` for valid entries) instead of
 `value`; `negotiation.json` has `cases` with `client`, `supported` and
 `expect`.

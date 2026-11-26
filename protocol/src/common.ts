@@ -23,6 +23,24 @@ export const RequestIdSchema = z.string().regex(/^[A-Za-z0-9_-]{1,64}$/);
 /** YouTube video ID. */
 export const VideoIdSchema = z.string().regex(/^[A-Za-z0-9_-]{11}$/);
 
+/**
+ * Catalog (1.1): opaque reference issued by the desktop, base64url, 16-32
+ * chars (at least 96 random bits). The desktop maps it, for one paired device
+ * only, to a YouTube endpoint, continuation token or image URL. Phones never
+ * build or modify refs; they only send back ones they received.
+ */
+export const RefSchema = z
+  .string()
+  .regex(
+    new RegExp(
+      `^[A-Za-z0-9_-]{${LIMITS.refMinLength},${LIMITS.refMaxLength}}$`,
+    ),
+  );
+/** Catalog (1.1): opaque "load more" cursor. Same shape as a ref. */
+export const CursorSchema = RefSchema;
+/** Catalog (1.1): opaque thumbnail ref, fetched with `catalog.thumb`. Same shape as a ref. */
+export const ThumbRefSchema = RefSchema;
+
 export const TextSchema = z.string().max(LIMITS.textMax);
 export const DeviceNameSchema = z
   .string()
@@ -66,6 +84,11 @@ export const TrackSchema = z.strictObject({
   album: TextSchema.nullable(),
   durationSeconds: SecondsSchema.nullable(),
   thumbnailUrl: HttpsUrlSchema.nullable(),
+  /**
+   * 1.1: present (ref or null) when the negotiated minor is >= 1, absent in
+   * 1.0 sessions, because 1.0 parsers reject unknown keys.
+   */
+  thumb: ThumbRefSchema.nullable().optional(),
 });
 
 export const ErrorCodeSchema = z.enum([
@@ -83,6 +106,12 @@ export const ErrorCodeSchema = z.enum([
   'not_ready',
   'stale_queue',
   'internal',
+  /** 1.1, catalog commands only: ref or cursor unknown, expired, or not valid for this action. */
+  'not_found',
+  /** 1.1, catalog commands only: needs a signed-in YouTube Music account on the desktop. */
+  'signed_out',
+  /** 1.1, catalog commands only: YouTube failed or returned something the desktop can't read. */
+  'unavailable',
 ]);
 
 export type RepeatMode = z.infer<typeof RepeatModeSchema>;

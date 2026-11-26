@@ -1,6 +1,6 @@
 {
   "$id": "https://github.com/Flanz1/pear-desktop/protocol/schema/client-handshake.schema.json",
-  "title": "First message from the phone (protocol 1.0)",
+  "title": "First message from the phone (protocol 1.1)",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "anyOf": [
     {
@@ -24,7 +24,10 @@
               "maximum": 999
             }
           },
-          "required": ["major", "minor"],
+          "required": [
+            "major",
+            "minor"
+          ],
           "additionalProperties": false
         },
         "client": {
@@ -39,7 +42,10 @@
               "pattern": "^[0-9A-Za-z.+-]{1,32}$"
             }
           },
-          "required": ["name", "version"],
+          "required": [
+            "name",
+            "version"
+          ],
           "additionalProperties": false
         },
         "deviceId": {
@@ -52,7 +58,13 @@
           "pattern": "^[A-Za-z0-9_-]{43}$"
         }
       },
-      "required": ["type", "protocol", "client", "deviceId", "token"],
+      "required": [
+        "type",
+        "protocol",
+        "client",
+        "deviceId",
+        "token"
+      ],
       "additionalProperties": false
     },
     {
@@ -78,7 +90,10 @@
                   "maximum": 999
                 }
               },
-              "required": ["major", "minor"],
+              "required": [
+                "major",
+                "minor"
+              ],
               "additionalProperties": false
             },
             "client": {
@@ -93,7 +108,10 @@
                   "pattern": "^[0-9A-Za-z.+-]{1,32}$"
                 }
               },
-              "required": ["name", "version"],
+              "required": [
+                "name",
+                "version"
+              ],
               "additionalProperties": false
             },
             "device": {
@@ -117,7 +135,10 @@
                   ]
                 }
               },
-              "required": ["name", "model"],
+              "required": [
+                "name",
+                "model"
+              ],
               "additionalProperties": false
             },
             "secret": {
@@ -125,7 +146,13 @@
               "pattern": "^[A-Za-z0-9_-]{22}$"
             }
           },
-          "required": ["type", "protocol", "client", "device", "secret"],
+          "required": [
+            "type",
+            "protocol",
+            "client",
+            "device",
+            "secret"
+          ],
           "additionalProperties": false
         },
         {
@@ -149,7 +176,10 @@
                   "maximum": 999
                 }
               },
-              "required": ["major", "minor"],
+              "required": [
+                "major",
+                "minor"
+              ],
               "additionalProperties": false
             },
             "client": {
@@ -164,7 +194,10 @@
                   "pattern": "^[0-9A-Za-z.+-]{1,32}$"
                 }
               },
-              "required": ["name", "version"],
+              "required": [
+                "name",
+                "version"
+              ],
               "additionalProperties": false
             },
             "device": {
@@ -188,7 +221,10 @@
                   ]
                 }
               },
-              "required": ["name", "model"],
+              "required": [
+                "name",
+                "model"
+              ],
               "additionalProperties": false
             },
             "code": {
@@ -196,7 +232,13 @@
               "pattern": "^[0-9]{6}$"
             }
           },
-          "required": ["type", "protocol", "client", "device", "code"],
+          "required": [
+            "type",
+            "protocol",
+            "client",
+            "device",
+            "code"
+          ],
           "additionalProperties": false
         }
       ]
