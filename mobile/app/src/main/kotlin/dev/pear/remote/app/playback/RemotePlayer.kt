@@ -38,9 +38,17 @@ class RemotePlayer(
 ) : SimpleBasePlayer(looper) {
 
     private var snapshot: PlayerSnapshot? = null
+    private var cover: ByteArray? = null
 
     fun update(s: PlayerSnapshot?) {
         snapshot = s
+        invalidateState()
+    }
+
+    /** The current track's cover bytes (from catalog.thumb, already checked to decode), or null. */
+    fun setCover(bytes: ByteArray?) {
+        if (bytes === cover) return
+        cover = bytes
         invalidateState()
     }
 
@@ -80,8 +88,9 @@ class RemotePlayer(
             .setArtist(track.artist)
             .setAlbumTitle(track.album)
             // Never the desktop's thumbnail URL: the app loads nothing from the
-            // internet. A neutral placeholder stands in for the cover.
-            .setArtworkData(placeholderArt, MediaMetadata.PICTURE_TYPE_FRONT_COVER)
+            // internet. The cover comes from the desktop (Track.thumb via
+            // catalog.thumb); a neutral placeholder stands in until then.
+            .setArtworkData(cover ?: placeholderArt, MediaMetadata.PICTURE_TYPE_FRONT_COVER)
             .build()
         val durationUs = track.durationSeconds?.let { (it * 1_000_000).toLong() } ?: C.TIME_UNSET
         val current = MediaItemData.Builder(track.videoId)

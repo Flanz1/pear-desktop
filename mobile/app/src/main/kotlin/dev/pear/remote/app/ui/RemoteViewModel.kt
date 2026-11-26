@@ -30,7 +30,12 @@ import kotlinx.coroutines.launch
 sealed interface Screen {
     data object Desktops : Screen
     data object Pair : Screen
+
+    /** Home/Search/Library when the desktop has the catalog; otherwise the plain remote. */
     data object Remote : Screen
+
+    /** Full player controls (seek, like, shuffle, repeat, volume), opened from the mini player. */
+    data object NowPlaying : Screen
     data object Queue : Screen
 }
 
@@ -94,16 +99,20 @@ class RemoteViewModel(application: Application) : AndroidViewModel(application) 
 
     // ---------- navigation ----------
 
+    private var queueReturn: Screen = Screen.Remote
+
     fun open(s: Screen) {
         if (s == Screen.Pair) startPairing()
         if (screen == Screen.Pair && s != Screen.Pair) stopPairing()
+        if (s == Screen.Queue && screen != Screen.Queue) queueReturn = screen
         controller.queueVisible = s == Screen.Queue
         screen = s
     }
 
     /** Returns false when the system should handle Back (leave the app). */
     fun back(): Boolean = when (screen) {
-        Screen.Queue -> { open(Screen.Remote); true }
+        Screen.Queue -> { open(queueReturn); true }
+        Screen.NowPlaying -> { open(Screen.Remote); true }
         Screen.Pair -> {
             if (pairStep !is PairStep.Choose && pairStep !is PairStep.Waiting) {
                 pairJob?.cancel()
@@ -141,6 +150,7 @@ class RemoteViewModel(application: Application) : AndroidViewModel(application) 
         viewModelScope.launch {
             when (val r = s.block()) {
                 CommandResult.Ok -> Unit
+                CommandResult.NotAvailable -> _messages.tryEmit(dev.pear.remote.app.R.string.browse_update_desktop)
                 CommandResult.NotDelivered -> _messages.tryEmit(dev.pear.remote.app.R.string.command_failed)
                 is CommandResult.Rejected -> when (r.code) {
                     dev.pear.remote.protocol.ErrorCode.NOT_READY -> _messages.tryEmit(dev.pear.remote.app.R.string.remote_not_ready)
@@ -149,6 +159,33 @@ class RemoteViewModel(application: Application) : AndroidViewModel(application) 
                 }
             }
         }
+    }
+
+    private var volumeTarget: Int? = null
+    private var volumeJob: Job? = null
+
+    /**
+     * Hardware volume keys while the app is open. Key repeat is fast, so at
+     * most one setVolume per 120 ms goes out (the desktop allows 10/s).
+     * Returns false if there's nothing to control.
+     */
+    fun adjustVolume(delta: Int): Boolean {
+        val current = player.value?.state?.volume?.volume ?: return false
+        if (controller.session == null) return false
+        volumeTarget = ((volumeTarget ?: current) + delta).coerceIn(0, 100)
+        if (volumeJob?.isActive == true) return true
+        volumeJob = viewModelScope.launch {
+            var sent: Int? = null
+            while (true) {
+                val v = volumeTarget ?: break
+                if (v == sent) break
+                sent = v
+                controller.session?.setVolume(v)
+                kotlinx.coroutines.delay(120)
+            }
+            volumeTarget = null
+        }
+        return true
     }
 
     // ---------- pairing ----------

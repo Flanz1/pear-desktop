@@ -1,8 +1,10 @@
 # Pear Remote for Android
 
 Native Android (Kotlin, Jetpack Compose) remote for the Pear Desktop
-`phone-remote` plugin. It implements protocol v1 as specified in
-[`protocol/SPEC.md`](../protocol/SPEC.md).
+`phone-remote` plugin. It implements protocol 1.1 as specified in
+[`protocol/SPEC.md`](../protocol/SPEC.md): the remote (1.0) and, with a
+desktop that offers it, browsing and search of the desktop's YouTube Music
+(the catalog, SPEC section 10).
 
 No Google Play services, Firebase, ML Kit or other Google services: the app
 works on de-Googled phones. QR codes are decoded on-device with ZXing.
@@ -43,7 +45,10 @@ and checks that the Kotlin decoder accepts every `valid` entry, rejects every
 listener from `src/plugins/phone-remote/backend` on loopback with a fake
 player, and drives it with the Kotlin client: fingerprint probe, wrong pin,
 wrong code, Deny, QR pairing, hello, commands, pushed events, `not_ready`,
-`stale_queue`, revoke, and listener shutdown. It needs Node 22+ and
+`stale_queue`, revoke, and listener shutdown. `CatalogInteropTest` runs the
+harness with `--catalog` (the real catalog service over a synthetic page
+bridge, no YouTube) and checks gating against 1.0 sessions and desktops
+without the catalog, page shapes, `not_found`, `not_ready`, and thumbnails. It needs Node 22+ and
 `pnpm install` in the repository root, so it only runs with `-Pinterop`.
 
 ## Permissions
@@ -58,9 +63,23 @@ Approved by the project owner. Any new permission needs approval first.
 
 ## Behaviour notes
 
-- **Network.** The only network peer is the paired desktop on the LAN. No
-  album art is loaded (the desktop's `thumbnailUrl` is validated and ignored);
-  a neutral placeholder is shown instead, also in the notification.
+- **Network.** The only network peer is the paired desktop on the LAN.
+  Covers come from the desktop with `catalog.thumb` (re-encoded by the
+  desktop, at most 160x160 and 24 KiB) and are decoded on the phone with
+  `BitmapFactory` after checking their size. The desktop's `thumbnailUrl` is
+  validated and ignored. Without a cover (1.0 desktop, no thumbnail) a
+  neutral placeholder is shown, also in the notification.
+- **Browsing (1.1).** Home (every shelf of the desktop's home feed, plus mood
+  chips), Search (suggestions after 300 ms without typing, filters, top
+  result, load more), Library (playlists with Liked songs first, songs,
+  albums, artists) and album/playlist/artist pages, with a mini player above
+  the navigation bar. Catalog commands are sent only when the negotiated
+  version is 1.1 and `welcome.capabilities` has the matching capability;
+  otherwise the app shows the remote as in 1.0 with a note to update Pear
+  Desktop. Covers are requested only for rows on screen, at most 3 at a
+  time, and only while the local copy of the desktop's rate limit has more
+  than half its burst left, so player commands always have headroom. An
+  expired ref (`not_found`) reloads its page quietly and retries once.
 
 - **Security.** The phone trusts only the SPKI pin from the QR code (or the
   one the user confirmed on the manual path). No system trust fallback. For

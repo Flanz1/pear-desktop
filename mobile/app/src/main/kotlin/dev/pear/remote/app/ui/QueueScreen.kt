@@ -27,6 +27,8 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -64,7 +66,7 @@ fun QueueScreen(vm: RemoteViewModel, modifier: Modifier = Modifier) {
                 ListItem(
                     modifier = Modifier.heightIn(min = 56.dp).clickable { vm.command { playQueueItem(item) } },
                     leadingContent = {
-                        ArtPlaceholder(Modifier.size(48.dp))
+                        Cover(item.thumb, Modifier.size(48.dp).clip(RoundedCornerShape(4.dp)))
                     },
                     headlineContent = {
                         Text(

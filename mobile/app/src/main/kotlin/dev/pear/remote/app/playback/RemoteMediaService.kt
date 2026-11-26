@@ -11,7 +11,12 @@ import dev.pear.remote.app.PearRemoteApp
 import dev.pear.remote.app.ui.MainActivity
 import dev.pear.remote.client.ConnectionStatus
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.launch
 
 /**
@@ -39,6 +44,16 @@ class RemoteMediaService : MediaSessionService() {
         session = MediaSession.Builder(this, p).setSessionActivity(open).build()
 
         jobs += app.scope.launch { app.controller.player.collect { p.update(it) } }
+        // Now-playing cover for the notification and lock screen, fetched over the paired connection.
+        jobs += app.scope.launch {
+            app.controller.player.map { it?.state?.track?.thumb }.distinctUntilChanged().collectLatest { ref ->
+                p.setCover(null)
+                if (ref == null) return@collectLatest
+                val bytes = app.controller.thumbnails.load(ref) ?: return@collectLatest
+                val ok = withContext(Dispatchers.Default) { dev.pear.remote.app.ui.decodeCover(bytes)?.also { it.recycle() } != null }
+                if (ok) p.setCover(bytes) else app.controller.thumbnails.reportBad(ref)
+            }
+        }
         jobs += app.scope.launch {
             combine(app.policy.visible, app.controller.status) { v, st -> v || st is ConnectionStatus.Connected ||
                 st is ConnectionStatus.Connecting || st is ConnectionStatus.Retrying }
