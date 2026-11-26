@@ -1,0 +1,396 @@
+{
+  "description": "Messages from the desktop. Android: your parser must accept every valid entry and reject every invalid one. Desktop: everything you send must validate.",
+  "valid": [
+    {
+      "name": "welcome",
+      "value": {
+        "type": "welcome",
+        "protocol": {
+          "major": 1,
+          "minor": 0
+        },
+        "server": {
+          "name": "pear-desktop",
+          "version": "3.12.1"
+        },
+        "instanceId": "5f0c6d1e-9a2b-4c3d-8e7f-6a5b4c3d2e1f",
+        "name": "Marko PC",
+        "capabilities": []
+      }
+    },
+    {
+      "name": "error update_required",
+      "value": {
+        "type": "error",
+        "id": null,
+        "code": "update_required",
+        "message": "Protocol 0.x is no longer supported",
+        "supported": {
+          "min": 1,
+          "max": 1
+        }
+      }
+    },
+    {
+      "name": "error for command",
+      "value": {
+        "type": "error",
+        "id": "r7",
+        "code": "not_ready",
+        "message": "Player not loaded",
+        "supported": null
+      }
+    },
+    {
+      "name": "pair.result",
+      "value": {
+        "type": "pair.result",
+        "deviceId": "0b7e2f4a-3c1d-4e5f-8a9b-1c2d3e4f5a6b",
+        "token": "q1W2e3R4t5Y6u7I8o9P0a1S2d3F4g5H6j7K8l9Z0x1C",
+        "instanceId": "5f0c6d1e-9a2b-4c3d-8e7f-6a5b4c3d2e1f"
+      }
+    },
+    {
+      "name": "result",
+      "value": {
+        "type": "result",
+        "id": "r1"
+      }
+    },
+    {
+      "name": "state pushed",
+      "value": {
+        "type": "state",
+        "id": null,
+        "state": {
+          "track": {
+            "videoId": "dQw4w9WgXcQ",
+            "title": "Never Gonna Give You Up",
+            "artist": "Rick Astley",
+            "album": "Whenever You Need Somebody",
+            "durationSeconds": 213,
+            "thumbnailUrl": "https://lh3.googleusercontent.com/abc=w544-h544"
+          },
+          "playback": {
+            "status": "playing",
+            "positionSeconds": 42.25
+          },
+          "volume": {
+            "volume": 70,
+            "muted": false
+          },
+          "repeat": "NONE",
+          "shuffle": false,
+          "like": "LIKE"
+        }
+      }
+    },
+    {
+      "name": "state nothing playing",
+      "value": {
+        "type": "state",
+        "id": "r2",
+        "state": {
+          "track": null,
+          "playback": {
+            "status": "stopped",
+            "positionSeconds": 0
+          },
+          "volume": {
+            "volume": 70,
+            "muted": false
+          },
+          "repeat": "NONE",
+          "shuffle": false,
+          "like": "INDIFFERENT"
+        }
+      }
+    },
+    {
+      "name": "track.changed",
+      "value": {
+        "type": "track.changed",
+        "track": {
+          "videoId": "dQw4w9WgXcQ",
+          "title": "Never Gonna Give You Up",
+          "artist": "Rick Astley",
+          "album": null,
+          "durationSeconds": null,
+          "thumbnailUrl": null
+        }
+      }
+    },
+    {
+      "name": "track.changed to nothing",
+      "value": {
+        "type": "track.changed",
+        "track": null
+      }
+    },
+    {
+      "name": "playback.changed",
+      "value": {
+        "type": "playback.changed",
+        "playback": {
+          "status": "paused",
+          "positionSeconds": 120
+        }
+      }
+    },
+    {
+      "name": "volume.changed",
+      "value": {
+        "type": "volume.changed",
+        "volume": {
+          "volume": 0,
+          "muted": true
+        }
+      }
+    },
+    {
+      "name": "repeat.changed",
+      "value": {
+        "type": "repeat.changed",
+        "repeat": "ALL"
+      }
+    },
+    {
+      "name": "shuffle.changed",
+      "value": {
+        "type": "shuffle.changed",
+        "shuffle": true
+      }
+    },
+    {
+      "name": "like.changed",
+      "value": {
+        "type": "like.changed",
+        "like": "DISLIKE"
+      }
+    },
+    {
+      "name": "queue.changed",
+      "value": {
+        "type": "queue.changed"
+      }
+    },
+    {
+      "name": "queue",
+      "value": {
+        "type": "queue",
+        "id": "r3",
+        "items": [
+          {
+            "index": 0,
+            "videoId": "dQw4w9WgXcQ",
+            "title": "Never Gonna Give You Up",
+            "artist": "Rick Astley",
+            "durationSeconds": 213,
+            "thumbnailUrl": null,
+            "isCurrent": true
+          },
+          {
+            "index": 1,
+            "videoId": "dQw4w9WgXcQ",
+            "title": "Never Gonna Give You Up",
+            "artist": "Rick Astley",
+            "durationSeconds": 213,
+            "thumbnailUrl": null,
+            "isCurrent": false
+          }
+        ],
+        "truncated": false
+      }
+    },
+    {
+      "name": "empty queue",
+      "value": {
+        "type": "queue",
+        "id": "r4",
+        "items": [],
+        "truncated": false
+      }
+    },
+    {
+      "name": "server.closing",
+      "value": {
+        "type": "server.closing",
+        "reason": "revoked"
+      }
+    }
+  ],
+  "invalid": [
+    {
+      "name": "unknown type",
+      "value": {
+        "type": "ads.show"
+      }
+    },
+    {
+      "name": "error unknown code",
+      "value": {
+        "type": "error",
+        "id": null,
+        "code": "teapot",
+        "message": "",
+        "supported": null
+      }
+    },
+    {
+      "name": "error missing supported",
+      "value": {
+        "type": "error",
+        "id": null,
+        "code": "internal",
+        "message": ""
+      }
+    },
+    {
+      "name": "http thumbnail",
+      "value": {
+        "type": "track.changed",
+        "track": {
+          "videoId": "dQw4w9WgXcQ",
+          "title": "Never Gonna Give You Up",
+          "artist": "Rick Astley",
+          "album": "Whenever You Need Somebody",
+          "durationSeconds": 213,
+          "thumbnailUrl": "http://example.com/a.jpg"
+        }
+      }
+    },
+    {
+      "name": "javascript thumbnail",
+      "value": {
+        "type": "track.changed",
+        "track": {
+          "videoId": "dQw4w9WgXcQ",
+          "title": "Never Gonna Give You Up",
+          "artist": "Rick Astley",
+          "album": "Whenever You Need Somebody",
+          "durationSeconds": 213,
+          "thumbnailUrl": "javascript:alert(1)"
+        }
+      }
+    },
+    {
+      "name": "bad videoId",
+      "value": {
+        "type": "track.changed",
+        "track": {
+          "videoId": "short",
+          "title": "Never Gonna Give You Up",
+          "artist": "Rick Astley",
+          "album": "Whenever You Need Somebody",
+          "durationSeconds": 213,
+          "thumbnailUrl": "https://lh3.googleusercontent.com/abc=w544-h544"
+        }
+      }
+    },
+    {
+      "name": "title too long",
+      "value": {
+        "type": "track.changed",
+        "track": {
+          "videoId": "dQw4w9WgXcQ",
+          "title": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "artist": "Rick Astley",
+          "album": "Whenever You Need Somebody",
+          "durationSeconds": 213,
+          "thumbnailUrl": "https://lh3.googleusercontent.com/abc=w544-h544"
+        }
+      }
+    },
+    {
+      "name": "volume 150",
+      "value": {
+        "type": "volume.changed",
+        "volume": {
+          "volume": 150,
+          "muted": false
+        }
+      }
+    },
+    {
+      "name": "status unknown",
+      "value": {
+        "type": "playback.changed",
+        "playback": {
+          "status": "rewinding",
+          "positionSeconds": 1
+        }
+      }
+    },
+    {
+      "name": "state missing like",
+      "value": {
+        "type": "state",
+        "id": null,
+        "state": {
+          "track": {
+            "videoId": "dQw4w9WgXcQ",
+            "title": "Never Gonna Give You Up",
+            "artist": "Rick Astley",
+            "album": "Whenever You Need Somebody",
+            "durationSeconds": 213,
+            "thumbnailUrl": "https://lh3.googleusercontent.com/abc=w544-h544"
+          },
+          "playback": {
+            "status": "playing",
+            "positionSeconds": 42.25
+          },
+          "volume": {
+            "volume": 70,
+            "muted": false
+          },
+          "repeat": "NONE",
+          "shuffle": false
+        }
+      }
+    },
+    {
+      "name": "queue missing truncated",
+      "value": {
+        "type": "queue",
+        "id": "r3",
+        "items": []
+      }
+    },
+    {
+      "name": "queue item extra field",
+      "value": {
+        "type": "queue",
+        "id": "r3",
+        "items": [
+          {
+            "index": 0,
+            "videoId": "dQw4w9WgXcQ",
+            "title": "Never Gonna Give You Up",
+            "artist": "Rick Astley",
+            "durationSeconds": 213,
+            "thumbnailUrl": null,
+            "isCurrent": true,
+            "extra": 1
+          }
+        ],
+        "truncated": false
+      }
+    },
+    {
+      "name": "pair.result short token",
+      "value": {
+        "type": "pair.result",
+        "deviceId": "0b7e2f4a-3c1d-4e5f-8a9b-1c2d3e4f5a6b",
+        "token": "abc",
+        "instanceId": "5f0c6d1e-9a2b-4c3d-8e7f-6a5b4c3d2e1f"
+      }
+    },
+    {
+      "name": "closing unknown reason",
+      "value": {
+        "type": "server.closing",
+        "reason": "bored"
+      }
+    }
+  ]
+}

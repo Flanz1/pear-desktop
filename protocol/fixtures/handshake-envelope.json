@@ -1,0 +1,69 @@
+{
+  "description": "Version-stable envelope read before full validation, so an incompatible phone still gets update_required. type and protocol keep this shape in every major.",
+  "valid": [
+    {
+      "name": "v1 hello",
+      "value": {
+        "type": "hello",
+        "protocol": {
+          "major": 1,
+          "minor": 0
+        },
+        "client": {
+          "name": "pear-remote-android",
+          "version": "0.1.0"
+        },
+        "deviceId": "0b7e2f4a-3c1d-4e5f-8a9b-1c2d3e4f5a6b",
+        "token": "q1W2e3R4t5Y6u7I8o9P0a1S2d3F4g5H6j7K8l9Z0x1C"
+      }
+    },
+    {
+      "name": "future major with unknown fields",
+      "value": {
+        "type": "hello",
+        "protocol": {
+          "major": 2,
+          "minor": 0
+        },
+        "auth": {
+          "scheme": "new"
+        }
+      }
+    },
+    {
+      "name": "old major pair.request",
+      "value": {
+        "type": "pair.request",
+        "protocol": {
+          "major": 0,
+          "minor": 9
+        }
+      }
+    }
+  ],
+  "invalid": [
+    {
+      "name": "missing protocol",
+      "value": {
+        "type": "hello"
+      }
+    },
+    {
+      "name": "protocol as string",
+      "value": {
+        "type": "hello",
+        "protocol": "1.0"
+      }
+    },
+    {
+      "name": "other type",
+      "value": {
+        "type": "player.play",
+        "protocol": {
+          "major": 1,
+          "minor": 0
+        }
+      }
+    }
+  ]
+}

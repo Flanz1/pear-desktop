@@ -1,0 +1,290 @@
+{
+  "description": "Commands after welcome. Every command carries a request id that the desktop echoes in result or error.",
+  "valid": [
+    {
+      "name": "play",
+      "value": {
+        "type": "player.play",
+        "id": "r1"
+      }
+    },
+    {
+      "name": "pause",
+      "value": {
+        "type": "player.pause",
+        "id": "r1"
+      }
+    },
+    {
+      "name": "togglePlay",
+      "value": {
+        "type": "player.togglePlay",
+        "id": "r1"
+      }
+    },
+    {
+      "name": "next",
+      "value": {
+        "type": "player.next",
+        "id": "r1"
+      }
+    },
+    {
+      "name": "previous",
+      "value": {
+        "type": "player.previous",
+        "id": "r1"
+      }
+    },
+    {
+      "name": "seek",
+      "value": {
+        "type": "player.seek",
+        "id": "r1",
+        "positionSeconds": 93.5
+      }
+    },
+    {
+      "name": "seek to 0",
+      "value": {
+        "type": "player.seek",
+        "id": "r1",
+        "positionSeconds": 0
+      }
+    },
+    {
+      "name": "setVolume 0",
+      "value": {
+        "type": "player.setVolume",
+        "id": "r1",
+        "volume": 0
+      }
+    },
+    {
+      "name": "setVolume 100",
+      "value": {
+        "type": "player.setVolume",
+        "id": "r1",
+        "volume": 100
+      }
+    },
+    {
+      "name": "setMuted",
+      "value": {
+        "type": "player.setMuted",
+        "id": "r1",
+        "muted": true
+      }
+    },
+    {
+      "name": "toggleShuffle",
+      "value": {
+        "type": "player.toggleShuffle",
+        "id": "r1"
+      }
+    },
+    {
+      "name": "setRepeat ONE",
+      "value": {
+        "type": "player.setRepeat",
+        "id": "r1",
+        "mode": "ONE"
+      }
+    },
+    {
+      "name": "setLike",
+      "value": {
+        "type": "track.setLike",
+        "id": "r1",
+        "status": "INDIFFERENT"
+      }
+    },
+    {
+      "name": "state.get",
+      "value": {
+        "type": "state.get",
+        "id": "r1"
+      }
+    },
+    {
+      "name": "queue.get",
+      "value": {
+        "type": "queue.get",
+        "id": "r1"
+      }
+    },
+    {
+      "name": "queue.play",
+      "value": {
+        "type": "queue.play",
+        "id": "r1",
+        "index": 4,
+        "videoId": "dQw4w9WgXcQ"
+      }
+    },
+    {
+      "name": "long request id",
+      "value": {
+        "type": "player.next",
+        "id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      }
+    }
+  ],
+  "invalid": [
+    {
+      "name": "missing id",
+      "value": {
+        "type": "player.play"
+      }
+    },
+    {
+      "name": "empty id",
+      "value": {
+        "type": "player.play",
+        "id": ""
+      }
+    },
+    {
+      "name": "id too long",
+      "value": {
+        "type": "player.play",
+        "id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      }
+    },
+    {
+      "name": "id with space",
+      "value": {
+        "type": "player.play",
+        "id": "a b"
+      }
+    },
+    {
+      "name": "numeric id",
+      "value": {
+        "type": "player.play",
+        "id": 1
+      }
+    },
+    {
+      "name": "unknown command",
+      "value": {
+        "type": "player.eject",
+        "id": "r1"
+      }
+    },
+    {
+      "name": "hello after welcome",
+      "value": {
+        "type": "hello",
+        "protocol": {
+          "major": 1,
+          "minor": 0
+        },
+        "client": {
+          "name": "pear-remote-android",
+          "version": "0.1.0"
+        },
+        "deviceId": "0b7e2f4a-3c1d-4e5f-8a9b-1c2d3e4f5a6b",
+        "token": "q1W2e3R4t5Y6u7I8o9P0a1S2d3F4g5H6j7K8l9Z0x1C"
+      }
+    },
+    {
+      "name": "extra field",
+      "value": {
+        "type": "player.play",
+        "id": "r1",
+        "force": true
+      }
+    },
+    {
+      "name": "negative seek",
+      "value": {
+        "type": "player.seek",
+        "id": "r1",
+        "positionSeconds": -1
+      }
+    },
+    {
+      "name": "seek past 24h",
+      "value": {
+        "type": "player.seek",
+        "id": "r1",
+        "positionSeconds": 86401
+      }
+    },
+    {
+      "name": "seek as string",
+      "value": {
+        "type": "player.seek",
+        "id": "r1",
+        "positionSeconds": "10"
+      }
+    },
+    {
+      "name": "volume 101",
+      "value": {
+        "type": "player.setVolume",
+        "id": "r1",
+        "volume": 101
+      }
+    },
+    {
+      "name": "volume fractional",
+      "value": {
+        "type": "player.setVolume",
+        "id": "r1",
+        "volume": 50.5
+      }
+    },
+    {
+      "name": "muted as string",
+      "value": {
+        "type": "player.setMuted",
+        "id": "r1",
+        "muted": "true"
+      }
+    },
+    {
+      "name": "repeat lowercase",
+      "value": {
+        "type": "player.setRepeat",
+        "id": "r1",
+        "mode": "one"
+      }
+    },
+    {
+      "name": "like unknown",
+      "value": {
+        "type": "track.setLike",
+        "id": "r1",
+        "status": "LOVE"
+      }
+    },
+    {
+      "name": "queue.play without videoId",
+      "value": {
+        "type": "queue.play",
+        "id": "r1",
+        "index": 1
+      }
+    },
+    {
+      "name": "queue.play bad videoId",
+      "value": {
+        "type": "queue.play",
+        "id": "r1",
+        "index": 1,
+        "videoId": "<script>"
+      }
+    },
+    {
+      "name": "queue.play negative index",
+      "value": {
+        "type": "queue.play",
+        "id": "r1",
+        "index": -1,
+        "videoId": "dQw4w9WgXcQ"
+      }
+    }
+  ]
+}
