@@ -64,6 +64,26 @@ unhandled({
 let mainWindow: Electron.BrowserWindow | null;
 electronUpdater.autoUpdater.autoDownload = false;
 
+// The updater reads owner/repo from the app-update.yml that electron-builder
+// generates from the `publish` config. Derive the download page from the same
+// file so the dialog always points where the updater looks.
+const getReleasesLink = () => {
+  try {
+    const yml = fs.readFileSync(
+      path.join(process.resourcesPath, 'app-update.yml'),
+      'utf8',
+    );
+    const owner = /^owner:\s*(\S+)/m.exec(yml)?.[1];
+    const repo = /^repo:\s*(\S+)/m.exec(yml)?.[1];
+    if (owner && repo) {
+      return `https://github.com/${owner}/${repo}/releases/latest`;
+    }
+  } catch {
+    // fall through to the fork default
+  }
+  return 'https://github.com/Flanz1/pear-desktop/releases/latest';
+};
+
 const gotTheLock = app.requestSingleInstanceLock();
 if (!gotTheLock) {
   app.exit();
@@ -817,8 +837,7 @@ app.whenReady().then(async () => {
       clearTimeout(updateTimeout);
     }, 2000);
     electronUpdater.autoUpdater.on('update-available', () => {
-      const downloadLink =
-        'https://github.com/pear-devs/pear-desktop/releases/latest';
+      const downloadLink = getReleasesLink();
       const dialogOptions: Electron.MessageBoxOptions = {
         type: 'info',
         buttons: [
