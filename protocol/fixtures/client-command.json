@@ -1,5 +1,5 @@
 {
-  "description": "Commands after welcome. Every command carries a request id that the desktop echoes in result or error.",
+  "description": "Commands after welcome. Every command carries a request id that the desktop echoes in result or error. Catalog commands (1.1) may only be sent when the negotiated minor is >= 1 and welcome.capabilities lists the capability in COMMAND_REQUIREMENTS.",
   "valid": [
     {
       "name": "play",
@@ -127,6 +127,216 @@
       "value": {
         "type": "player.next",
         "id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      }
+    },
+    {
+      "name": "catalog.browse home",
+      "value": {
+        "type": "catalog.browse",
+        "id": "c1",
+        "target": "home",
+        "continuation": null
+      }
+    },
+    {
+      "name": "catalog.browse library continuation",
+      "value": {
+        "type": "catalog.browse",
+        "id": "c2",
+        "target": "library.playlists",
+        "continuation": "Y29udGludWF0aW9uLWN1cnNvcjAx"
+      }
+    },
+    {
+      "name": "catalog.browse library.albums",
+      "value": {
+        "type": "catalog.browse",
+        "id": "c3",
+        "target": "library.albums",
+        "continuation": null
+      }
+    },
+    {
+      "name": "catalog.browse library.artists",
+      "value": {
+        "type": "catalog.browse",
+        "id": "c3",
+        "target": "library.artists",
+        "continuation": null
+      }
+    },
+    {
+      "name": "catalog.browse library.songs",
+      "value": {
+        "type": "catalog.browse",
+        "id": "c3",
+        "target": "library.songs",
+        "continuation": null
+      }
+    },
+    {
+      "name": "catalog.browse library.liked",
+      "value": {
+        "type": "catalog.browse",
+        "id": "c3",
+        "target": "library.liked",
+        "continuation": null
+      }
+    },
+    {
+      "name": "catalog.open",
+      "value": {
+        "type": "catalog.open",
+        "id": "c4",
+        "ref": "Q2F0YWxvZ1JlZjAwMDAx",
+        "continuation": null
+      }
+    },
+    {
+      "name": "catalog.open continuation, 32-char cursor",
+      "value": {
+        "type": "catalog.open",
+        "id": "c5",
+        "ref": "Q2F0YWxvZ1JlZjAwMDAx",
+        "continuation": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+      }
+    },
+    {
+      "name": "catalog.search top",
+      "value": {
+        "type": "catalog.search",
+        "id": "c6",
+        "query": "never gonna give you up",
+        "filter": "top",
+        "continuation": null
+      }
+    },
+    {
+      "name": "catalog.search songs",
+      "value": {
+        "type": "catalog.search",
+        "id": "c7",
+        "query": "Röyksopp ♪",
+        "filter": "songs",
+        "continuation": null
+      }
+    },
+    {
+      "name": "catalog.search albums",
+      "value": {
+        "type": "catalog.search",
+        "id": "c7",
+        "query": "Röyksopp ♪",
+        "filter": "albums",
+        "continuation": null
+      }
+    },
+    {
+      "name": "catalog.search artists",
+      "value": {
+        "type": "catalog.search",
+        "id": "c7",
+        "query": "Röyksopp ♪",
+        "filter": "artists",
+        "continuation": null
+      }
+    },
+    {
+      "name": "catalog.search playlists",
+      "value": {
+        "type": "catalog.search",
+        "id": "c7",
+        "query": "Röyksopp ♪",
+        "filter": "playlists",
+        "continuation": null
+      }
+    },
+    {
+      "name": "catalog.search videos",
+      "value": {
+        "type": "catalog.search",
+        "id": "c7",
+        "query": "Röyksopp ♪",
+        "filter": "videos",
+        "continuation": null
+      }
+    },
+    {
+      "name": "catalog.search 150-char query with continuation",
+      "value": {
+        "type": "catalog.search",
+        "id": "c8",
+        "query": "qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq",
+        "filter": "songs",
+        "continuation": "Y29udGludWF0aW9uLWN1cnNvcjAx"
+      }
+    },
+    {
+      "name": "catalog.suggest",
+      "value": {
+        "type": "catalog.suggest",
+        "id": "c9",
+        "query": "never g"
+      }
+    },
+    {
+      "name": "catalog.suggest one char",
+      "value": {
+        "type": "catalog.suggest",
+        "id": "c9",
+        "query": "a"
+      }
+    },
+    {
+      "name": "catalog.play play",
+      "value": {
+        "type": "catalog.play",
+        "id": "c10",
+        "ref": "aGVsbG8td29ybGQtcmVmLTAy",
+        "action": "play"
+      }
+    },
+    {
+      "name": "catalog.play shuffle",
+      "value": {
+        "type": "catalog.play",
+        "id": "c10",
+        "ref": "aGVsbG8td29ybGQtcmVmLTAy",
+        "action": "shuffle"
+      }
+    },
+    {
+      "name": "catalog.play playNext",
+      "value": {
+        "type": "catalog.play",
+        "id": "c10",
+        "ref": "aGVsbG8td29ybGQtcmVmLTAy",
+        "action": "playNext"
+      }
+    },
+    {
+      "name": "catalog.play addToQueue",
+      "value": {
+        "type": "catalog.play",
+        "id": "c10",
+        "ref": "aGVsbG8td29ybGQtcmVmLTAy",
+        "action": "addToQueue"
+      }
+    },
+    {
+      "name": "catalog.thumb",
+      "value": {
+        "type": "catalog.thumb",
+        "id": "c11",
+        "thumb": "dGh1bWItcmVmLTAwMDAwMDAx"
+      }
+    },
+    {
+      "name": "catalog.thumb 16-char ref",
+      "value": {
+        "type": "catalog.thumb",
+        "id": "c11",
+        "thumb": "AAAAAAAAAAAAAAAA"
       }
     }
   ],
@@ -284,6 +494,223 @@
         "id": "r1",
         "index": -1,
         "videoId": "dQw4w9WgXcQ"
+      }
+    },
+    {
+      "name": "catalog.browse unknown target",
+      "value": {
+        "type": "catalog.browse",
+        "id": "c1",
+        "target": "library.podcasts",
+        "continuation": null
+      }
+    },
+    {
+      "name": "catalog.browse missing continuation",
+      "value": {
+        "type": "catalog.browse",
+        "id": "c1",
+        "target": "home"
+      }
+    },
+    {
+      "name": "catalog.browse without id",
+      "value": {
+        "type": "catalog.browse",
+        "target": "home",
+        "continuation": null
+      }
+    },
+    {
+      "name": "catalog.browse with ref",
+      "value": {
+        "type": "catalog.browse",
+        "id": "c1",
+        "target": "home",
+        "continuation": null,
+        "ref": "Q2F0YWxvZ1JlZjAwMDAx"
+      }
+    },
+    {
+      "name": "catalog.open ref too short",
+      "value": {
+        "type": "catalog.open",
+        "id": "c4",
+        "ref": "AAAAAAAAAAAAAAA",
+        "continuation": null
+      }
+    },
+    {
+      "name": "catalog.open ref too long",
+      "value": {
+        "type": "catalog.open",
+        "id": "c4",
+        "ref": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "continuation": null
+      }
+    },
+    {
+      "name": "catalog.open ref with padding",
+      "value": {
+        "type": "catalog.open",
+        "id": "c4",
+        "ref": "QUJDREVGR0hJSktMTU5PUA==",
+        "continuation": null
+      }
+    },
+    {
+      "name": "catalog.open ref is a YouTube browse id",
+      "value": {
+        "type": "catalog.open",
+        "id": "c4",
+        "ref": "MPREb_abc/def?list=1",
+        "continuation": null
+      }
+    },
+    {
+      "name": "catalog.open with YouTube params",
+      "value": {
+        "type": "catalog.open",
+        "id": "c4",
+        "ref": "Q2F0YWxvZ1JlZjAwMDAx",
+        "continuation": null,
+        "params": "ggMCCAI%3D"
+      }
+    },
+    {
+      "name": "catalog.open bad cursor",
+      "value": {
+        "type": "catalog.open",
+        "id": "c4",
+        "ref": "Q2F0YWxvZ1JlZjAwMDAx",
+        "continuation": "short"
+      }
+    },
+    {
+      "name": "catalog.search empty query",
+      "value": {
+        "type": "catalog.search",
+        "id": "c6",
+        "query": "",
+        "filter": "top",
+        "continuation": null
+      }
+    },
+    {
+      "name": "catalog.search whitespace-only query",
+      "value": {
+        "type": "catalog.search",
+        "id": "c6",
+        "query": "   ",
+        "filter": "top",
+        "continuation": null
+      }
+    },
+    {
+      "name": "catalog.search 151-char query",
+      "value": {
+        "type": "catalog.search",
+        "id": "c6",
+        "query": "qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq",
+        "filter": "top",
+        "continuation": null
+      }
+    },
+    {
+      "name": "catalog.search control character",
+      "value": {
+        "type": "catalog.search",
+        "id": "c6",
+        "query": "a\nb",
+        "filter": "top",
+        "continuation": null
+      }
+    },
+    {
+      "name": "catalog.search unknown filter",
+      "value": {
+        "type": "catalog.search",
+        "id": "c6",
+        "query": "x",
+        "filter": "podcasts",
+        "continuation": null
+      }
+    },
+    {
+      "name": "catalog.search missing filter",
+      "value": {
+        "type": "catalog.search",
+        "id": "c6",
+        "query": "x",
+        "continuation": null
+      }
+    },
+    {
+      "name": "catalog.suggest empty",
+      "value": {
+        "type": "catalog.suggest",
+        "id": "c9",
+        "query": ""
+      }
+    },
+    {
+      "name": "catalog.suggest 151 chars",
+      "value": {
+        "type": "catalog.suggest",
+        "id": "c9",
+        "query": "qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq"
+      }
+    },
+    {
+      "name": "catalog.suggest with continuation",
+      "value": {
+        "type": "catalog.suggest",
+        "id": "c9",
+        "query": "x",
+        "continuation": null
+      }
+    },
+    {
+      "name": "catalog.play unknown action",
+      "value": {
+        "type": "catalog.play",
+        "id": "c10",
+        "ref": "aGVsbG8td29ybGQtcmVmLTAy",
+        "action": "download"
+      }
+    },
+    {
+      "name": "catalog.play open is not a play action",
+      "value": {
+        "type": "catalog.play",
+        "id": "c10",
+        "ref": "aGVsbG8td29ybGQtcmVmLTAy",
+        "action": "open"
+      }
+    },
+    {
+      "name": "catalog.play with videoId",
+      "value": {
+        "type": "catalog.play",
+        "id": "c10",
+        "videoId": "dQw4w9WgXcQ",
+        "action": "play"
+      }
+    },
+    {
+      "name": "catalog.thumb url",
+      "value": {
+        "type": "catalog.thumb",
+        "id": "c11",
+        "thumb": "https://i.ytimg.com/vi/dQw4w9WgXcQ/hq.jpg"
+      }
+    },
+    {
+      "name": "catalog.thumb null",
+      "value": {
+        "type": "catalog.thumb",
+        "id": "c11",
+        "thumb": null
       }
     }
   ]

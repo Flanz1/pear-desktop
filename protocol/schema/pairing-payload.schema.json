@@ -1,6 +1,6 @@
 {
   "$id": "https://github.com/Flanz1/pear-desktop/protocol/schema/pairing-payload.schema.json",
-  "title": "Decoded pairing QR payload (protocol 1.0)",
+  "title": "Decoded pairing QR payload (protocol 1.1)",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "type": "object",
   "properties": {

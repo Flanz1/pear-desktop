@@ -20,6 +20,8 @@ import {
   type QueueItem,
 } from '../backend/server.ts';
 
+import type { CatalogHandler } from '../backend/catalog.ts';
+
 export const plainProtector = {
   available: () => false,
   encrypt: (s: string) => Buffer.from(s),
@@ -106,7 +108,9 @@ export interface Harness {
   stop: () => Promise<void>;
 }
 
-export const startHarness = async (): Promise<Harness> => {
+export const startHarness = async (
+  opts: { catalog?: CatalogHandler } = {},
+): Promise<Harness> => {
   const identity = await testIdentity();
   const devices = new DeviceStore([], () => {});
   const answer: Harness['answer'] = { value: true };
@@ -129,6 +133,7 @@ export const startHarness = async (): Promise<Harness> => {
     devices,
     pairing,
     player,
+    catalog: opts.catalog,
     allowLoopbackForTests: true,
   });
   await server.start();
@@ -230,6 +235,7 @@ export class TestClient {
 
 export const client = { name: 'pear-remote-android', version: '1.0.0' };
 export const v1 = { major: 1, minor: 0 };
+export const v11 = { major: 1, minor: 1 };
 
 export const pairWithSecret = async (h: Harness) => {
   const { secret } = h.pairing.open();
@@ -251,9 +257,10 @@ export const connectHello = async (
   h: Harness,
   deviceId: string,
   token: string,
+  protocol: { major: number; minor: number } = v1,
 ) => {
   const c = new TestClient(h.port);
   await c.open();
-  c.send({ type: 'hello', protocol: v1, client, deviceId, token });
+  c.send({ type: 'hello', protocol, client, deviceId, token });
   return c;
 };

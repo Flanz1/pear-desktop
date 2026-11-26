@@ -11,12 +11,16 @@ import {
   client,
   connectHello,
   pairWithSecret,
+  sampleState,
   startHarness,
   v1,
+  v11,
   type Harness,
 } from './helpers.ts';
 
 import { CLOSE_CODES } from '../../../../protocol/src/index.ts';
+import { CatalogService } from '../backend/catalog.ts';
+import { isAllowedThumbUrl } from '../backend/thumbnails.ts';
 
 describe('phone-remote listener', () => {
   let h: Harness;
@@ -317,6 +321,234 @@ describe('phone-remote auth rate limit', () => {
       );
     } finally {
       await h.stop();
+    }
+  });
+});
+
+describe('phone-remote catalog (1.1)', () => {
+  let h: Harness;
+  let catalog: CatalogService;
+  const pageRequests: unknown[] = [];
+  before(async () => {
+    catalog = new CatalogService({
+      page: {
+        request(req) {
+          pageRequests.push(req);
+          if (req.op === 'browse') {
+            return Promise.resolve({
+              ok: true,
+              page: {
+                title: null,
+                subtitle: null,
+                header: null,
+                chips: [],
+                mode: 'sections',
+                continuation: null,
+                sections: [
+                  {
+                    title: 'Listen again',
+                    layout: 'grid',
+                    items: [
+                      {
+                        kind: 'song',
+                        title: 'Song',
+                        subtitle: 'Artist',
+                        durationSeconds: 200,
+                        explicit: false,
+                        thumbnailUrl: 'https://i.ytimg.com/vi/x/default.jpg',
+                        videoId: 'dQw4w9WgXcQ',
+                        play: { watch: { videoId: 'dQw4w9WgXcQ' } },
+                      },
+                    ],
+                  },
+                ],
+              },
+            });
+          }
+          return Promise.resolve({ ok: true, done: true });
+        },
+      },
+      thumbs: {
+        isAllowed: isAllowedThumbUrl,
+        get: () =>
+          Promise.resolve({
+            mime: 'image/jpeg',
+            data: Buffer.from('jpeg').toString('base64'),
+          }),
+      },
+    });
+    h = await startHarness({ catalog });
+  });
+  after(async () => {
+    await h.stop();
+  });
+
+  const connect = async (protocol: { major: number; minor: number }) => {
+    const { result } = await pairWithSecret(h);
+    const c = await connectHello(h, result.deviceId, result.token, protocol);
+    return {
+      c,
+      welcome: await c.waitFor('welcome'),
+      deviceId: result.deviceId,
+    };
+  };
+
+  it('1.0 session: no capabilities, catalog commands get unknown_type, no thumb fields', async () => {
+    const { c, welcome } = await connect(v1);
+    assert.deepEqual(welcome.protocol, v1);
+    assert.deepEqual(welcome.capabilities, []);
+    const state = await c.waitFor('state');
+    assert.ok(state.state.track && !('thumb' in state.state.track));
+    // Three in a row: unknown_type is not an invalid message, so no close.
+    for (const id of ['u1', 'u2', 'u3']) {
+      c.send({
+        type: 'catalog.browse',
+        id,
+        target: 'home',
+        continuation: null,
+      });
+      assert.equal(
+        (await c.waitFor('error', (m) => m.id === id)).code,
+        'unknown_type',
+      );
+    }
+    c.send({ type: 'queue.get', id: 'q' });
+    const q = await c.waitFor('queue', (m) => m.id === 'q');
+    assert.ok(!('thumb' in q.items[0]));
+    h.player.emit({ type: 'track.changed', track: h.player.state!.track });
+    const tc = await c.waitFor('track.changed');
+    assert.ok(tc.track && !('thumb' in tc.track));
+    assert.equal(c.closeCode, null);
+    assert.deepEqual(c.invalid, []);
+    c.ws.close();
+  });
+
+  it('1.1 session: capabilities, thumb refs, browse, thumb, play, per-device refs', async () => {
+    const { c, welcome } = await connect(v11);
+    assert.deepEqual(welcome.protocol, v11);
+    assert.deepEqual(welcome.capabilities, [
+      'catalog.browse',
+      'catalog.search',
+      'catalog.thumbnails',
+    ]);
+    const state = await c.waitFor('state');
+    const thumb = state.state.track?.thumb;
+    assert.match(thumb ?? '', /^[A-Za-z0-9_-]{16,32}$/);
+
+    c.send({ type: 'catalog.thumb', id: 't1', thumb });
+    const img = await c.waitFor('catalog.thumb', (m) => m.id === 't1');
+    assert.equal(img.mime, 'image/jpeg');
+
+    c.send({
+      type: 'catalog.browse',
+      id: 'b1',
+      target: 'home',
+      continuation: null,
+    });
+    const page = await c.waitFor('catalog.page', (m) => m.id === 'b1');
+    const item = page.sections[0].items[0];
+    assert.equal(item.isCurrent, true);
+    assert.deepEqual(item.actions, ['play']);
+
+    c.send({ type: 'catalog.play', id: 'p1', ref: item.ref, action: 'play' });
+    await c.waitFor('result', (m) => m.id === 'p1');
+    c.send({
+      type: 'catalog.play',
+      id: 'p2',
+      ref: item.ref,
+      action: 'addToQueue',
+    });
+    assert.equal(
+      (await c.waitFor('error', (m) => m.id === 'p2')).code,
+      'not_found',
+    );
+    assert.equal(
+      h.player.executed.length,
+      0,
+      'catalog never reaches player.execute',
+    );
+
+    // Pushes are per connection: this 1.1 client gets a thumb, a 1.0 one doesn't.
+    const old = await connect(v1);
+    h.player.emit({ type: 'track.changed', track: h.player.state!.track });
+    const mine = await c.waitFor('track.changed');
+    assert.equal(mine.track?.thumb, thumb, 'same target, same ref');
+    const theirs = await old.c.waitFor('track.changed');
+    assert.ok(theirs.track && !('thumb' in theirs.track));
+
+    // Another device can't use this device's refs.
+    const other = await connect(v11);
+    other.c.send({
+      type: 'catalog.play',
+      id: 'x1',
+      ref: item.ref,
+      action: 'play',
+    });
+    assert.equal(
+      (await other.c.waitFor('error', (m) => m.id === 'x1')).code,
+      'not_found',
+    );
+    other.c.send({ type: 'catalog.thumb', id: 'x2', thumb });
+    assert.equal(
+      (await other.c.waitFor('error', (m) => m.id === 'x2')).code,
+      'not_found',
+    );
+
+    // Player not loaded: not_ready (thumbnails still work).
+    h.player.state = null;
+    c.send({
+      type: 'catalog.browse',
+      id: 'nr',
+      target: 'home',
+      continuation: null,
+    });
+    assert.equal(
+      (await c.waitFor('error', (m) => m.id === 'nr')).code,
+      'not_ready',
+    );
+    c.send({ type: 'catalog.thumb', id: 't2', thumb });
+    await c.waitFor('catalog.thumb', (m) => m.id === 't2');
+    h.player.state = sampleState();
+
+    for (const x of [c, old.c, other.c]) assert.deepEqual(x.invalid, []);
+    for (const x of [c, old.c, other.c]) x.ws.close();
+  });
+
+  it('revoking forgets the device refs', async () => {
+    const { c, deviceId } = await connect(v11);
+    const thumb = (await c.waitFor('state')).state.track?.thumb;
+    h.devices.revoke(deviceId);
+    h.server.disconnectDevice(deviceId);
+    await c.waitClose();
+    // The device's table is gone.
+    const answer = await catalog.handle(
+      deviceId,
+      { type: 'catalog.thumb', id: 'r', thumb: thumb! },
+      { currentVideoId: null },
+    );
+    assert.equal('error' in answer && answer.error, 'not_found');
+  });
+
+  it('a 1.1 session without a catalog advertises nothing and omits thumb', async () => {
+    const plain = await startHarness();
+    try {
+      const { result } = await pairWithSecret(plain);
+      const c = await connectHello(plain, result.deviceId, result.token, v11);
+      assert.deepEqual((await c.waitFor('welcome')).capabilities, []);
+      c.send({
+        type: 'catalog.search',
+        id: 's',
+        query: 'x',
+        filter: 'top',
+        continuation: null,
+      });
+      assert.equal(
+        (await c.waitFor('error', (m) => m.id === 's')).code,
+        'unknown_type',
+      );
+      c.ws.close();
+    } finally {
+      await plain.stop();
     }
   });
 });

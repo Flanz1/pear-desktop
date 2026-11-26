@@ -7,7 +7,7 @@
  * does not understand.
  */
 
-export const PROTOCOL_VERSION = { major: 1, minor: 0 } as const;
+export const PROTOCOL_VERSION = { major: 1, minor: 1 } as const;
 
 export interface ProtocolVersion {
   major: number;
@@ -20,7 +20,7 @@ export interface ProtocolVersion {
  * after bumping PROTOCOL_VERSION.major.
  */
 export const DESKTOP_SUPPORTED: Readonly<Record<number, number>> = {
-  1: 0,
+  1: 1,
 };
 
 export type NegotiationResult =
@@ -57,4 +57,46 @@ export const negotiate = (
     code: client.major < min ? 'update_required' : 'desktop_update_required',
     supported: { min, max },
   };
+};
+
+/**
+ * Optional features a desktop can advertise in `welcome.capabilities`.
+ * Only meaningful when the negotiated minor is at least the one noted.
+ */
+export const CAPABILITIES = {
+  /** 1.1: catalog.browse, catalog.open, catalog.play. */
+  catalogBrowse: 'catalog.browse',
+  /** 1.1: catalog.search, catalog.suggest. Never advertised without catalog.browse. */
+  catalogSearch: 'catalog.search',
+  /** 1.1: catalog.thumb, and non-null `thumb` refs. Never advertised without catalog.browse. */
+  catalogThumbnails: 'catalog.thumbnails',
+} as const;
+
+export type Capability = (typeof CAPABILITIES)[keyof typeof CAPABILITIES];
+
+/** Command type -> the minor version and capability it needs. Commands not listed are in 1.0. */
+export const COMMAND_REQUIREMENTS: Readonly<
+  Record<string, { minor: number; capability: Capability }>
+> = {
+  'catalog.browse': { minor: 1, capability: CAPABILITIES.catalogBrowse },
+  'catalog.open': { minor: 1, capability: CAPABILITIES.catalogBrowse },
+  'catalog.play': { minor: 1, capability: CAPABILITIES.catalogBrowse },
+  'catalog.search': { minor: 1, capability: CAPABILITIES.catalogSearch },
+  'catalog.suggest': { minor: 1, capability: CAPABILITIES.catalogSearch },
+  'catalog.thumb': { minor: 1, capability: CAPABILITIES.catalogThumbnails },
+};
+
+/**
+ * Whether a command may be sent in a session (phone side) or must be answered
+ * with `unknown_type` (desktop side). `version` is the negotiated version from
+ * `welcome.protocol`; `capabilities` is `welcome.capabilities`.
+ */
+export const isCommandAvailable = (
+  type: string,
+  version: ProtocolVersion,
+  capabilities: readonly string[],
+): boolean => {
+  const req = COMMAND_REQUIREMENTS[type];
+  if (!req) return true;
+  return version.minor >= req.minor && capabilities.includes(req.capability);
 };
