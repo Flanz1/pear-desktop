@@ -222,6 +222,36 @@ describe('phone-remote listener', () => {
     h.answer.value = true;
   });
 
+  it('phone disconnecting during the dialog dismisses it and closes the window', async () => {
+    h.answer.value = 'hang';
+    const { code } = h.pairing.open();
+    const c = new TestClient(h.port);
+    await c.open();
+    c.send({
+      type: 'pair.request',
+      protocol: v1,
+      client,
+      device: { name: 'Gone', model: null },
+      code,
+    });
+    await new Promise((r) => setTimeout(r, 100));
+    assert.equal(h.pairing.getState().open, true);
+    c.ws.terminate();
+    await new Promise((r) => setTimeout(r, 100));
+    assert.equal(h.pairing.getState().open, false);
+    h.answer.value = true;
+  });
+
+  it('pairing_closed is not counted as a failed attempt', () => {
+    h.pairing.close('cancelled');
+    for (let i = 0; i < 10; i++) {
+      assert.equal(h.pairing.attempt({ code: '000000' }), 'closed');
+    }
+    const { code } = h.pairing.open();
+    assert.equal(h.pairing.attempt({ code }), 'accepted');
+    h.pairing.close('cancelled');
+  });
+
   it('window timeout while the dialog is open gives pairing_timeout', async () => {
     h.answer.value = 'hang';
     const { code } = h.pairing.open();
