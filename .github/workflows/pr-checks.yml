@@ -1,0 +1,138 @@
+name: PR Checks
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    branches: [master]
+
+permissions: {}
+
+concurrency:
+  group: pr-checks-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: "24.x"
+
+jobs:
+  changes:
+    name: Detect changed areas
+    if: github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      protocol: ${{ steps.detect.outputs.protocol }}
+      app: ${{ steps.detect.outputs.app }}
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Detect changed paths
+        id: detect
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          changed="$(git diff --name-only "$BASE_SHA" "$HEAD_SHA")"
+          echo "$changed"
+          if echo "$changed" | grep -qE '^(protocol/|\.github/workflows/pr-checks\.yml$|package\.json$|pnpm-lock\.yaml$)'; then
+            echo "protocol=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "protocol=false" >> "$GITHUB_OUTPUT"
+          fi
+          if echo "$changed" | grep -qE '^(src/|web/|vite-plugins/|patches/|tests/|tools/|assets/|package\.json$|pnpm-lock\.yaml$|pnpm-workspace\.yaml$|electron\.vite\.config\.mts$|electron-builder\.yml$|tsconfig.*\.json$|\.github/workflows/pr-checks\.yml$)'; then
+            echo "app=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "app=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  protocol:
+    name: Protocol contract tests
+    needs: changes
+    if: needs.changes.outputs.protocol == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          persist-credentials: false
+
+      - name: Check protocol/ exists
+        id: exists
+        run: |
+          if [ -d protocol ] && [ -f protocol/tsconfig.json ]; then
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "present=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::protocol/ is not present on this branch; skipping protocol checks."
+          fi
+
+      - name: Install pnpm
+        if: steps.exists.outputs.present == 'true'
+        uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320
+        with:
+          version: 12
+          run_install: false
+
+      - name: Setup NodeJS
+        if: steps.exists.outputs.present == 'true'
+        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        if: steps.exists.outputs.present == 'true'
+        run: pnpm install --frozen-lockfile --ignore-scripts
+
+      - name: Typecheck protocol
+        if: steps.exists.outputs.present == 'true'
+        run: pnpm exec tsc -p protocol/tsconfig.json
+
+      - name: Contract tests
+        if: steps.exists.outputs.present == 'true'
+        run: node --test 'protocol/tests/*.test.ts'
+
+  desktop:
+    name: Desktop lint + build (${{ matrix.os }})
+    needs: changes
+    if: needs.changes.outputs.app == 'true'
+    runs-on: ${{ matrix.os }}
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          persist-credentials: false
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320
+        with:
+          version: 12
+          run_install: false
+
+      - name: Setup NodeJS
+        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Build
+        run: pnpm build
