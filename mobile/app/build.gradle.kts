@@ -12,9 +12,24 @@ android {
         applicationId = "dev.pear.remote"
         minSdk = 26
         targetSdk = 35
-        versionCode = 1
+        versionCode = 100
         // Sent as client.version in the handshake: must match ^[0-9A-Za-z.+-]{1,32}$.
-        versionName = "0.1.0"
+        versionName = "1.0.0"
+    }
+
+    // Release signing comes only from the environment (the release workflow
+    // maps CI secrets onto these variables). Nothing is read from or written to
+    // the repository, and without them the release build stays unsigned.
+    val releaseKeystore = System.getenv("PEAR_REMOTE_KEYSTORE_FILE")
+    if (!releaseKeystore.isNullOrBlank()) {
+        signingConfigs {
+            create("release") {
+                storeFile = file(releaseKeystore)
+                storePassword = System.getenv("PEAR_REMOTE_KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("PEAR_REMOTE_KEY_ALIAS")
+                keyPassword = System.getenv("PEAR_REMOTE_KEY_PASSWORD")
+            }
+        }
     }
 
     buildTypes {
@@ -22,7 +37,7 @@ android {
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-            // Signing is configured by the release pipeline (DevOps), never in this file.
+            signingConfigs.findByName("release")?.let { signingConfig = it }
         }
     }
 
