@@ -1,5 +1,6 @@
 package dev.pear.remote.app.ui
 
+import kotlin.math.roundToInt
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -15,6 +16,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.QueueMusic
 import androidx.compose.material.icons.automirrored.filled.VolumeOff
 import androidx.compose.material.icons.automirrored.filled.VolumeUp
@@ -66,8 +68,18 @@ import dev.pear.remote.protocol.PlaybackStatus
 import dev.pear.remote.protocol.RepeatMode
 import kotlinx.coroutines.delay
 
+/**
+ * The full player. As Now Playing (opened from the mini player) it has a
+ * back arrow; with a desktop that has no catalog it is the main screen, as
+ * in 1.0, with a short note that updating Pear Desktop adds browsing.
+ */
 @Composable
-fun RemoteScreen(vm: RemoteViewModel, modifier: Modifier = Modifier) {
+fun RemoteScreen(
+    vm: RemoteViewModel,
+    modifier: Modifier = Modifier,
+    onBack: (() -> Unit)? = null,
+    showUpdateNote: Boolean = false,
+) {
     val status by vm.status.collectAsState()
     val snap by vm.player.collectAsState()
 
@@ -76,8 +88,13 @@ fun RemoteScreen(vm: RemoteViewModel, modifier: Modifier = Modifier) {
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
+            if (onBack != null) {
+                IconButton(onClick = onBack) {
+                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back))
+                }
+            }
             Text(
-                desktopName(status) ?: stringResource(R.string.app_name),
+                if (onBack != null) stringResource(R.string.remote_now_playing) else desktopName(status) ?: stringResource(R.string.app_name),
                 style = MaterialTheme.typography.titleLarge,
                 modifier = Modifier.weight(1f),
                 maxLines = 1,
@@ -92,6 +109,13 @@ fun RemoteScreen(vm: RemoteViewModel, modifier: Modifier = Modifier) {
         }
 
         StatusBanner(status, vm)
+        if (showUpdateNote) {
+            Text(
+                stringResource(R.string.browse_update_desktop),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
 
         val s = snap
         if (s == null) return@Column
@@ -99,7 +123,9 @@ fun RemoteScreen(vm: RemoteViewModel, modifier: Modifier = Modifier) {
         if (track == null) {
             Text(stringResource(R.string.remote_nothing_playing), style = MaterialTheme.typography.bodyLarge)
         } else {
-            ArtPlaceholder(
+            // From Track.thumb via catalog.thumb (1.1); the placeholder otherwise.
+            Cover(
+                track.thumb,
                 Modifier.fillMaxWidth().widthIn(max = 480.dp).aspectRatio(1f).clip(RoundedCornerShape(12.dp))
                     .align(Alignment.CenterHorizontally),
             )
@@ -127,8 +153,9 @@ private fun desktopName(st: ConnectionStatus): String? = when (st) {
     ConnectionStatus.Idle -> null
 }
 
+/** Connection state with Retry / Pair again; nothing while connected. */
 @Composable
-private fun StatusBanner(st: ConnectionStatus, vm: RemoteViewModel) {
+fun StatusBanner(st: ConnectionStatus, vm: RemoteViewModel) {
     val text: String
     var action: (@Composable () -> Unit)? = null
     when (st) {
@@ -304,13 +331,13 @@ fun VolumeRow(s: PlayerSnapshot, vm: RemoteViewModel) {
                 val now = System.nanoTime()
                 if (now - lastSent > 120_000_000L) {
                     lastSent = now
-                    val v = it.toInt()
+                    val v = it.roundToInt()
                     vm.command { setVolume(v) }
                 }
             },
             onValueChangeFinished = {
                 dragging = false
-                val v = dragValue.toInt()
+                val v = dragValue.roundToInt()
                 vm.command { setVolume(v) }
             },
             valueRange = 0f..100f,

@@ -18,7 +18,6 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
-import org.junit.jupiter.api.Assumptions.assumeFalse
 import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestFactory
@@ -56,7 +55,6 @@ class ContractTest {
         return valid.map { c ->
             DynamicTest.dynamicTest("$file accepts: ${c.name}") {
                 val v = c["value"]!!
-                assumeFalse(needsMinor1(v), "1.1-only entry; this client speaks 1.0")
                 val decoded = decode(v)
                 assertNotNull(decoded, "rejected a valid entry")
                 if (encode != null) assertJsonEquals(v, encode(decoded!!))
@@ -68,28 +66,6 @@ class ContractTest {
                 assertNull(decode(c["value"]!!), "accepted an invalid entry")
             }
         }
-    }
-
-    /**
-     * Valid entries that only exist in sessions negotiated at 1.1 (SPEC 4.1):
-     * catalog messages and commands, the three catalog error codes, and
-     * `thumb` on Track/QueueItem. This client sends hello at 1.0, so a 1.1
-     * desktop never sends these to it and its strict decoder rejects them.
-     * Invalid entries still all run, so a 1.0 decoder must reject them too.
-     */
-    private fun needsMinor1(v: JsonElement): Boolean {
-        val o = v as? JsonObject ?: return false
-        val type = (o["type"] as? JsonPrimitive)?.content.orEmpty()
-        val code = (o["code"] as? JsonPrimitive)?.content
-        return type.startsWith("catalog.") ||
-            (type == "error" && code in setOf("not_found", "signed_out", "unavailable")) ||
-            hasKey(o, "thumb")
-    }
-
-    private fun hasKey(e: JsonElement, key: String): Boolean = when (e) {
-        is JsonObject -> key in e || e.values.any { hasKey(it, key) }
-        is JsonArray -> e.any { hasKey(it, key) }
-        else -> false
     }
 
     private val JsonObject.name get() = this["name"]!!.jsonPrimitive.content

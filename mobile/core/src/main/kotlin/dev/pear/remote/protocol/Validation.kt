@@ -16,6 +16,10 @@ object Fields {
     private val APP_NAME = Regex("^[a-z0-9-]{1,64}$")
     private val APP_VERSION = Regex("^[0-9A-Za-z.+-]{1,32}$")
     private val CAPABILITY = Regex("^[a-z0-9.-]{1,64}$")
+    private val REF = Regex("^[A-Za-z0-9_-]{${Limits.REF_MIN_LENGTH},${Limits.REF_MAX_LENGTH}}$")
+
+    // zod 4 z.base64(): standard alphabet, padded.
+    private val BASE64 = Regex("^$|^(?:[0-9a-zA-Z+/]{4})*(?:(?:[0-9a-zA-Z+/]{2}==)|(?:[0-9a-zA-Z+/]{3}=))?$")
 
     // zod 4 z.uuid(): RFC 9562 variant and version 1-8, plus the nil and max UUIDs.
     private val UUID = Regex(
@@ -33,6 +37,26 @@ object Fields {
     fun isAppName(s: String) = APP_NAME.matches(s)
     fun isAppVersion(s: String) = APP_VERSION.matches(s)
     fun isCapability(s: String) = CAPABILITY.matches(s)
+
+    /** RefSchema / CursorSchema / ThumbRefSchema: 16-32 base64url chars, no padding. */
+    fun isRef(s: String) = REF.matches(s)
+
+    fun isBase64(s: String) = BASE64.matches(s)
+
+    /**
+     * CatalogQuerySchema: trimmed (JavaScript whitespace), then 1-150 UTF-16
+     * code units with no control characters (U+0000-U+001F, U+007F).
+     * Returns the trimmed query, or null if it isn't valid.
+     */
+    fun catalogQuery(s: String): String? {
+        val t = s.trim { isJsWhitespace(it) }
+        if (t.length !in 1..Limits.CATALOG_QUERY_MAX) return null
+        if (t.any { it.code <= 0x1f || it.code == 0x7f }) return null
+        return t
+    }
+
+    /** One entry of catalog.suggestions: 1-150 chars (not trimmed). */
+    fun isSuggestion(s: String) = s.length in 1..Limits.CATALOG_QUERY_MAX
 
     /** TextSchema: at most 500 UTF-16 code units, like JavaScript's length. */
     fun isText(s: String) = s.length <= Limits.TEXT_MAX

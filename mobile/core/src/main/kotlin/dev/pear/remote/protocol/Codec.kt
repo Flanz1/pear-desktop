@@ -174,9 +174,108 @@ object ProtocolCodec {
                 r.keys("type", "reason")
                 ServerMessage.ServerClosing(ClosingReason.fromWire(r.str("reason")) ?: throw InvalidMessage())
             }
+            "catalog.page" -> catalogPage(r)
+            "catalog.suggestions" -> {
+                r.keys("type", "id", "items")
+                ServerMessage.CatalogSuggestions(
+                    r.str("id", Fields::isRequestId),
+                    r.arr("items", max = Limits.CATALOG_SUGGESTIONS_MAX).map { str(it, Fields::isSuggestion) },
+                )
+            }
+            "catalog.thumb" -> {
+                r.keys("type", "id", "mime", "data")
+                val id = r.str("id", Fields::isRequestId)
+                val mime = ThumbMime.fromWire(r.str("mime")) ?: throw InvalidMessage()
+                val data = r.str("data") {
+                    it.length in 4..THUMB_MAX_BASE64 && Fields.isBase64(it)
+                }
+                ServerMessage.CatalogThumb(id, mime, data)
+            }
             else -> throw InvalidMessage()
         }
     }
+
+    /** Longest base64 text for a thumbnail of at most THUMB_MAX_BYTES (zod: ceil(n / 3) * 4). */
+    private const val THUMB_MAX_BASE64 = (Limits.THUMB_MAX_BYTES + 2) / 3 * 4
+
+    private fun catalogPage(r: Reader): ServerMessage.CatalogPage {
+        r.keys("type", "id", "title", "subtitle", "header", "chips", "sections", "append", "continuation")
+        val page = ServerMessage.CatalogPage(
+            id = r.str("id", Fields::isRequestId),
+            title = r.str("title", Fields::isText),
+            subtitle = r.strOrNull("subtitle", Fields::isText),
+            header = r.objOrNull("header")?.let(::catalogHeader),
+            chips = r.arr("chips", max = Limits.CATALOG_CHIPS_MAX).map { catalogChip(it.asObject()) },
+            sections = r.arr("sections", max = Limits.CATALOG_SECTIONS_MAX).map { catalogSection(it.asObject()) },
+            append = r.strOrNull("append")?.let { CatalogAppend.fromWire(it) ?: throw InvalidMessage() },
+            continuation = r.strOrNull("continuation", Fields::isRef),
+        )
+        // The two refinements of CatalogPageSchema.
+        if (page.append == CatalogAppend.ITEMS && page.sections.size != 1) throw InvalidMessage()
+        if (page.append != null && (page.header != null || page.chips.isNotEmpty())) throw InvalidMessage()
+        return page
+    }
+
+    private fun catalogHeader(o: JsonObject): CatalogHeader {
+        val r = Reader(o)
+        r.keys("kind", "title", "subtitle", "thumb", "ref", "actions")
+        return CatalogHeader(
+            HeaderKind.fromWire(r.str("kind")) ?: throw InvalidMessage(),
+            r.str("title", Fields::isText),
+            r.str("subtitle", Fields::isText),
+            r.strOrNull("thumb", Fields::isRef),
+            r.str("ref", Fields::isRef),
+            actions(r.arr("actions", max = 2), allowed = HEADER_ACTIONS, min = 0),
+        )
+    }
+
+    private val HEADER_ACTIONS = setOf(CatalogAction.PLAY, CatalogAction.SHUFFLE)
+
+    private fun actions(a: JsonArray, allowed: Set<CatalogAction>, min: Int): List<CatalogAction> {
+        val list = a.map { e -> CatalogAction.fromWire(str(e) { true })?.takeIf { it in allowed } ?: throw InvalidMessage() }
+        if (list.size < min || list.toSet().size != list.size) throw InvalidMessage()
+        return list
+    }
+
+    private fun catalogChip(o: JsonObject): CatalogChip {
+        val r = Reader(o)
+        r.keys("title", "ref")
+        return CatalogChip(r.str("title", Fields::isText), r.str("ref", Fields::isRef))
+    }
+
+    private fun catalogSection(o: JsonObject): CatalogSection {
+        val r = Reader(o)
+        r.keys("title", "layout", "items")
+        val items = r.arr("items", max = Limits.CATALOG_ITEMS_MAX).map { catalogItem(it.asObject()) }
+        if (items.isEmpty()) throw InvalidMessage()
+        return CatalogSection(
+            r.strOrNull("title", Fields::isText),
+            CatalogLayout.fromWire(r.str("layout")) ?: throw InvalidMessage(),
+            items,
+        )
+    }
+
+    private fun catalogItem(o: JsonObject): CatalogItem {
+        val r = Reader(o)
+        r.keys("ref", "kind", "title", "subtitle", "durationSeconds", "explicit", "actions", "thumb", "isCurrent")
+        return CatalogItem(
+            ref = r.str("ref", Fields::isRef),
+            kind = CatalogItemKind.fromWire(r.str("kind")) ?: throw InvalidMessage(),
+            title = r.str("title", Fields::isText),
+            subtitle = r.str("subtitle", Fields::isText),
+            durationSeconds = r.secondsOrNull("durationSeconds"),
+            explicit = r.bool("explicit"),
+            actions = actions(
+                r.arr("actions", max = CatalogAction.entries.size),
+                allowed = CatalogAction.entries.toSet(),
+                min = 1,
+            ),
+            thumb = r.strOrNull("thumb", Fields::isRef),
+            isCurrent = r.bool("isCurrent"),
+        )
+    }
+
+    private fun JsonElement.asObject(): JsonObject = this as? JsonObject ?: throw InvalidMessage()
 
     private fun clientHandshake(o: JsonObject): ClientHandshake {
         val r = Reader(o)
@@ -220,6 +319,12 @@ object ProtocolCodec {
             "player.setRepeat" -> listOf("mode")
             "track.setLike" -> listOf("status")
             "queue.play" -> listOf("index", "videoId")
+            "catalog.browse" -> listOf("target", "continuation")
+            "catalog.open" -> listOf("ref", "continuation")
+            "catalog.search" -> listOf("query", "filter", "continuation")
+            "catalog.suggest" -> listOf("query")
+            "catalog.play" -> listOf("ref", "action")
+            "catalog.thumb" -> listOf("thumb")
             else -> emptyList()
         }
         r.keys(*(listOf("type", "id") + extra).toTypedArray())
@@ -239,6 +344,29 @@ object ProtocolCodec {
             "state.get" -> ClientCommand.StateGet(id)
             "queue.get" -> ClientCommand.QueueGet(id)
             "queue.play" -> ClientCommand.QueuePlay(id, r.int("index", 0, 9999), r.str("videoId", Fields::isVideoId))
+            "catalog.browse" -> ClientCommand.CatalogBrowse(
+                id,
+                BrowseTarget.fromWire(r.str("target")) ?: throw InvalidMessage(),
+                r.strOrNull("continuation", Fields::isRef),
+            )
+            "catalog.open" -> ClientCommand.CatalogOpen(
+                id, r.str("ref", Fields::isRef), r.strOrNull("continuation", Fields::isRef),
+            )
+            "catalog.search" -> ClientCommand.CatalogSearch(
+                id,
+                Fields.catalogQuery(r.str("query")) ?: throw InvalidMessage(),
+                SearchFilter.fromWire(r.str("filter")) ?: throw InvalidMessage(),
+                r.strOrNull("continuation", Fields::isRef),
+            )
+            "catalog.suggest" -> ClientCommand.CatalogSuggest(
+                id, Fields.catalogQuery(r.str("query")) ?: throw InvalidMessage(),
+            )
+            "catalog.play" -> ClientCommand.CatalogPlay(
+                id,
+                r.str("ref", Fields::isRef),
+                CatalogAction.fromWire(r.str("action"))?.takeIf { it != CatalogAction.OPEN } ?: throw InvalidMessage(),
+            )
+            "catalog.thumb" -> ClientCommand.CatalogThumb(id, r.str("thumb", Fields::isRef))
             else -> throw InvalidMessage()
         }
     }
@@ -265,7 +393,7 @@ object ProtocolCodec {
 
     private fun track(o: JsonObject): Track {
         val r = Reader(o)
-        r.keys("videoId", "title", "artist", "album", "durationSeconds", "thumbnailUrl")
+        val hasThumb = r.keysWithOptional("thumb", "videoId", "title", "artist", "album", "durationSeconds", "thumbnailUrl")
         return Track(
             r.str("videoId", Fields::isVideoId),
             r.str("title", Fields::isText),
@@ -273,6 +401,8 @@ object ProtocolCodec {
             r.strOrNull("album", Fields::isText),
             r.secondsOrNull("durationSeconds"),
             r.strOrNull("thumbnailUrl", Fields::isHttpsUrl),
+            thumb = if (hasThumb) r.strOrNull("thumb", Fields::isRef) else null,
+            thumbPresent = hasThumb,
         )
     }
 
@@ -306,7 +436,9 @@ object ProtocolCodec {
 
     private fun queueItem(o: JsonObject): QueueItem {
         val r = Reader(o)
-        r.keys("index", "videoId", "title", "artist", "durationSeconds", "thumbnailUrl", "isCurrent")
+        val hasThumb = r.keysWithOptional(
+            "thumb", "index", "videoId", "title", "artist", "durationSeconds", "thumbnailUrl", "isCurrent",
+        )
         return QueueItem(
             r.int("index", 0, 9999),
             r.str("videoId", Fields::isVideoId),
@@ -315,6 +447,8 @@ object ProtocolCodec {
             r.secondsOrNull("durationSeconds"),
             r.strOrNull("thumbnailUrl", Fields::isHttpsUrl),
             r.bool("isCurrent"),
+            thumb = if (hasThumb) r.strOrNull("thumb", Fields::isRef) else null,
+            thumbPresent = hasThumb,
         )
     }
 
@@ -332,6 +466,16 @@ object ProtocolCodec {
         /** strictObject: exactly these keys. Every v1 field is required (nullable fields too). */
         fun keys(vararg expected: String) {
             if (o.size != expected.size || !expected.all { o.containsKey(it) }) throw InvalidMessage()
+        }
+
+        /**
+         * Like [keys], plus one optional key (`thumb` on Track/QueueItem is
+         * present in 1.1 sessions and absent in 1.0). Returns whether it's there.
+         */
+        fun keysWithOptional(optional: String, vararg required: String): Boolean {
+            val has = o.containsKey(optional)
+            if (has) keys(*required, optional) else keys(*required)
+            return has
         }
 
         private fun get(k: String): JsonElement = o[k] ?: throw InvalidMessage()
@@ -441,6 +585,25 @@ object ProtocolCodec {
                 put("index", JsonPrimitive(c.index))
                 put("videoId", JsonPrimitive(c.videoId))
             }
+            is ClientCommand.CatalogBrowse -> {
+                put("target", JsonPrimitive(c.target.wire))
+                put("continuation", c.continuation.json())
+            }
+            is ClientCommand.CatalogOpen -> {
+                put("ref", JsonPrimitive(c.ref))
+                put("continuation", c.continuation.json())
+            }
+            is ClientCommand.CatalogSearch -> {
+                put("query", JsonPrimitive(c.query))
+                put("filter", JsonPrimitive(c.filter.wire))
+                put("continuation", c.continuation.json())
+            }
+            is ClientCommand.CatalogSuggest -> put("query", JsonPrimitive(c.query))
+            is ClientCommand.CatalogPlay -> {
+                put("ref", JsonPrimitive(c.ref))
+                put("action", JsonPrimitive(c.action.wire))
+            }
+            is ClientCommand.CatalogThumb -> put("thumb", JsonPrimitive(c.thumb))
             else -> Unit
         }
     }
@@ -529,6 +692,7 @@ object ProtocolCodec {
                             put("durationSeconds", q.durationSeconds?.let(::num) ?: JsonNull)
                             put("thumbnailUrl", q.thumbnailUrl?.let(::JsonPrimitive) ?: JsonNull)
                             put("isCurrent", JsonPrimitive(q.isCurrent))
+                            if (q.thumbPresent) put("thumb", q.thumb.json())
                         })
                     }
                 })
@@ -538,8 +702,68 @@ object ProtocolCodec {
                 type("server.closing")
                 put("reason", JsonPrimitive(m.reason.wire))
             }
+            is ServerMessage.CatalogPage -> {
+                type("catalog.page")
+                put("id", JsonPrimitive(m.id))
+                put("title", JsonPrimitive(m.title))
+                put("subtitle", m.subtitle.json())
+                put("header", m.header?.let { h ->
+                    buildJsonObject {
+                        put("kind", JsonPrimitive(h.kind.wire))
+                        put("title", JsonPrimitive(h.title))
+                        put("subtitle", JsonPrimitive(h.subtitle))
+                        put("thumb", h.thumb.json())
+                        put("ref", JsonPrimitive(h.ref))
+                        put("actions", buildJsonArray { h.actions.forEach { add(JsonPrimitive(it.wire)) } })
+                    }
+                } ?: JsonNull)
+                put("chips", buildJsonArray {
+                    m.chips.forEach { c ->
+                        add(buildJsonObject {
+                            put("title", JsonPrimitive(c.title))
+                            put("ref", JsonPrimitive(c.ref))
+                        })
+                    }
+                })
+                put("sections", buildJsonArray {
+                    m.sections.forEach { sec ->
+                        add(buildJsonObject {
+                            put("title", sec.title.json())
+                            put("layout", JsonPrimitive(sec.layout.wire))
+                            put("items", buildJsonArray { sec.items.forEach { add(itemJson(it)) } })
+                        })
+                    }
+                })
+                put("append", m.append?.wire.json())
+                put("continuation", m.continuation.json())
+            }
+            is ServerMessage.CatalogSuggestions -> {
+                type("catalog.suggestions")
+                put("id", JsonPrimitive(m.id))
+                put("items", buildJsonArray { m.items.forEach { add(JsonPrimitive(it)) } })
+            }
+            is ServerMessage.CatalogThumb -> {
+                type("catalog.thumb")
+                put("id", JsonPrimitive(m.id))
+                put("mime", JsonPrimitive(m.mime.wire))
+                put("data", JsonPrimitive(m.data))
+            }
         }
     }
+
+    private fun itemJson(i: CatalogItem) = buildJsonObject {
+        put("ref", JsonPrimitive(i.ref))
+        put("kind", JsonPrimitive(i.kind.wire))
+        put("title", JsonPrimitive(i.title))
+        put("subtitle", JsonPrimitive(i.subtitle))
+        put("durationSeconds", i.durationSeconds?.let(::num) ?: JsonNull)
+        put("explicit", JsonPrimitive(i.explicit))
+        put("actions", buildJsonArray { i.actions.forEach { add(JsonPrimitive(it.wire)) } })
+        put("thumb", i.thumb.json())
+        put("isCurrent", JsonPrimitive(i.isCurrent))
+    }
+
+    private fun String?.json(): JsonElement = this?.let(::JsonPrimitive) ?: JsonNull
 
     private fun versionJson(v: ProtocolVersion) = buildJsonObject {
         put("major", JsonPrimitive(v.major))
@@ -558,6 +782,7 @@ object ProtocolCodec {
         put("album", t.album?.let(::JsonPrimitive) ?: JsonNull)
         put("durationSeconds", t.durationSeconds?.let(::num) ?: JsonNull)
         put("thumbnailUrl", t.thumbnailUrl?.let(::JsonPrimitive) ?: JsonNull)
+        if (t.thumbPresent) put("thumb", t.thumb.json())
     }
 
     private fun playbackJson(p: Playback) = buildJsonObject {
