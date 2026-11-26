@@ -52,11 +52,15 @@ Approved by the project owner. Any new permission needs approval first.
 
 | Permission                                                   | Why                                                                         |
 | ------------------------------------------------------------ | --------------------------------------------------------------------------- |
-| `INTERNET`                                                   | The wss connection to the desktop, and album art.                           |
+| `INTERNET`                                                   | The wss connection to the paired desktop. The app connects to nothing else. |
 | `FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_MEDIA_PLAYBACK`    | Media notification and lock-screen controls while music plays in the background. |
 | `CAMERA`                                                     | In-app QR scanner. Requested only when the user taps Scan.                 |
 
 ## Behaviour notes
+
+- **Network.** The only network peer is the paired desktop on the LAN. No
+  album art is loaded (the desktop's `thumbnailUrl` is validated and ignored);
+  a neutral placeholder is shown instead, also in the notification.
 
 - **Security.** The phone trusts only the SPKI pin from the QR code (or the
   one the user confirmed on the manual path). No system trust fallback. For

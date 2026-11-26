@@ -86,7 +86,6 @@
     <string name="remote_position_state">%1$s of %2$s</string>
     <string name="remote_queue">Queue</string>
     <string name="remote_computers">Computers</string>
-    <string name="remote_album_art">Album art</string>
     <string name="queue_title">Queue</string>
     <string name="queue_empty">The queue is empty.</string>
     <string name="queue_truncated">Showing the first 500 songs.</string>

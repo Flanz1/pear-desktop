@@ -29,7 +29,7 @@ class RemoteMediaService : MediaSessionService() {
     override fun onCreate() {
         super.onCreate()
         val app = application as PearRemoteApp
-        val p = RemotePlayer(Looper.getMainLooper(), app.controller, app.scope)
+        val p = RemotePlayer(Looper.getMainLooper(), app.controller, app.scope, placeholderArt())
         player = p
         val open = PendingIntent.getActivity(
             this, 0,
@@ -44,6 +44,23 @@ class RemoteMediaService : MediaSessionService() {
                 st is ConnectionStatus.Connecting || st is ConnectionStatus.Retrying }
                 .collect { keep -> if (!keep) stopSelfCleanly() }
         }
+    }
+
+    /** Renders the neutral cover placeholder (a music note on grey) as PNG. */
+    private fun placeholderArt(): ByteArray? = try {
+        val size = 256
+        val bmp = android.graphics.Bitmap.createBitmap(size, size, android.graphics.Bitmap.Config.ARGB_8888)
+        val canvas = android.graphics.Canvas(bmp)
+        canvas.drawColor(0xFF616161.toInt())
+        androidx.core.content.ContextCompat.getDrawable(this, dev.pear.remote.app.R.drawable.ic_art_placeholder)?.apply {
+            setBounds(size / 4, size / 4, size * 3 / 4, size * 3 / 4)
+            draw(canvas)
+        }
+        java.io.ByteArrayOutputStream().also { bmp.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, it) }
+            .toByteArray()
+            .also { bmp.recycle() }
+    } catch (_: Exception) {
+        null
     }
 
     override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaSession? = session

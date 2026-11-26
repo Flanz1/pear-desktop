@@ -3,7 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <!-- Approved by Marko (2026-11-26). Any other permission needs his approval first. -->
-    <!-- wss connection to the desktop on the LAN, and album art. -->
+    <!-- wss connection to the paired desktop on the LAN. The app connects to nothing else. -->
     <uses-permission android:name="android.permission.INTERNET" />
     <!-- Media notification and lock-screen controls while music plays and the app is in the background. -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />

@@ -1,6 +1,5 @@
 package dev.pear.remote.app.playback
 
-import android.net.Uri
 import android.os.Looper
 import androidx.annotation.OptIn
 import androidx.media3.common.C
@@ -34,6 +33,8 @@ class RemotePlayer(
     looper: Looper,
     private val controller: RemoteController,
     private val scope: CoroutineScope,
+    /** PNG shown as the cover in the notification and on the lock screen. */
+    private val placeholderArt: ByteArray?,
 ) : SimpleBasePlayer(looper) {
 
     private var snapshot: PlayerSnapshot? = null
@@ -78,7 +79,9 @@ class RemotePlayer(
             .setTitle(track.title)
             .setArtist(track.artist)
             .setAlbumTitle(track.album)
-            .setArtworkUri(track.thumbnailUrl?.let(Uri::parse))
+            // Never the desktop's thumbnail URL: the app loads nothing from the
+            // internet. A neutral placeholder stands in for the cover.
+            .setArtworkData(placeholderArt, MediaMetadata.PICTURE_TYPE_FRONT_COVER)
             .build()
         val durationUs = track.durationSeconds?.let { (it * 1_000_000).toLong() } ?: C.TIME_UNSET
         val current = MediaItemData.Builder(track.videoId)

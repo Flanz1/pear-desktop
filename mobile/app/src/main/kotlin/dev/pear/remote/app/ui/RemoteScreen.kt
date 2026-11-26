@@ -99,9 +99,7 @@ fun RemoteScreen(vm: RemoteViewModel, modifier: Modifier = Modifier) {
         if (track == null) {
             Text(stringResource(R.string.remote_nothing_playing), style = MaterialTheme.typography.bodyLarge)
         } else {
-            Artwork(
-                track.thumbnailUrl,
-                stringResource(R.string.remote_album_art),
+            ArtPlaceholder(
                 Modifier.fillMaxWidth().widthIn(max = 480.dp).aspectRatio(1f).clip(RoundedCornerShape(12.dp))
                     .align(Alignment.CenterHorizontally),
             )

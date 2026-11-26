@@ -64,7 +64,7 @@ fun QueueScreen(vm: RemoteViewModel, modifier: Modifier = Modifier) {
                 ListItem(
                     modifier = Modifier.heightIn(min = 56.dp).clickable { vm.command { playQueueItem(item) } },
                     leadingContent = {
-                        Artwork(item.thumbnailUrl, null, Modifier.size(48.dp))
+                        ArtPlaceholder(Modifier.size(48.dp))
                     },
                     headlineContent = {
                         Text(
