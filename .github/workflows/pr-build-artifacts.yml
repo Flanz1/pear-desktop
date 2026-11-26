@@ -91,10 +91,38 @@ jobs:
           pnpm dist:linux:deb-arm64
           pnpm dist:linux:rpm-arm64
 
+      # PR builds are a side-by-side test variant ("Pear Desktop Dev", see
+      # electron-builder.dev.yml) so installing or running one cannot replace
+      # or share settings with a stable install. Releases are unaffected.
       - name: Build on Windows
         if: startsWith(matrix.os, 'windows')
+        shell: bash
         run: |
-          pnpm dist:win
+          # Explicit targets: nsis-web (the stable config's default) needs a publish URL.
+          pnpm clean
+          pnpm build
+          pnpm electron-builder --win nsis portable --x64 --arm64 -p never --config electron-builder.dev.yml
+
+      - name: Verify the Windows build is isolated from the stable app
+        if: startsWith(matrix.os, 'windows')
+        shell: bash
+        run: |
+          set -euo pipefail
+          for dir in pack/win-unpacked pack/win-arm64-unpacked; do
+            [ -d "$dir" ] || continue
+            echo "== $dir"
+            if [ -e "$dir/resources/app-update.yml" ]; then
+              echo "::error::$dir has app-update.yml; the updater must be inactive in the dev variant"
+              exit 1
+            fi
+            asar="$PWD/$dir/resources/app.asar"
+            tmp="$(mktemp -d)"
+            (cd "$tmp" && npx --yes @electron/asar extract-file "$asar" package.json)
+            cat "$tmp/package.json"
+            if command -v cygpath > /dev/null; then tmp="$(cygpath -m "$tmp")"; fi
+            node -e "const p=require(process.argv[1]); if (p.name!=='pear-desktop-dev' || p.productName!=='Pear Desktop Dev') { console.error('wrong app identity:', p.name, p.productName); process.exit(1); }" "$tmp/package.json"
+          done
+          ls pack/*.exe
 
       - name: Upload artifacts
         uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f
