@@ -98,9 +98,10 @@ jobs:
         if: startsWith(matrix.os, 'windows')
         shell: bash
         run: |
+          # Explicit targets: nsis-web (the stable config's default) needs a publish URL.
           pnpm clean
           pnpm build
-          pnpm electron-builder --win -p never --config electron-builder.dev.yml
+          pnpm electron-builder --win nsis portable --x64 --arm64 -p never --config electron-builder.dev.yml
 
       - name: Verify the Windows build is isolated from the stable app
         if: startsWith(matrix.os, 'windows')
