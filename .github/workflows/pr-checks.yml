@@ -25,6 +25,8 @@ jobs:
       protocol: ${{ steps.detect.outputs.protocol }}
       app: ${{ steps.detect.outputs.app }}
       phone_remote: ${{ steps.detect.outputs.phone_remote }}
+      android: ${{ steps.detect.outputs.android }}
+      interop: ${{ steps.detect.outputs.interop }}
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
         with:
@@ -43,6 +45,18 @@ jobs:
             echo "protocol=true" >> "$GITHUB_OUTPUT"
           else
             echo "protocol=false" >> "$GITHUB_OUTPUT"
+          fi
+          if echo "$changed" | grep -qE '^(mobile/|protocol/fixtures/|\.github/workflows/pr-checks\.yml$)'; then
+            echo "android=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "android=false" >> "$GITHUB_OUTPUT"
+          fi
+          # The interop test runs the real desktop listener, so it also
+          # depends on the plugin, the protocol and the lockfile.
+          if echo "$changed" | grep -qE '^(mobile/|protocol/|src/plugins/phone-remote/|pnpm-lock\.yaml$|package\.json$|\.github/workflows/pr-checks\.yml$)'; then
+            echo "interop=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "interop=false" >> "$GITHUB_OUTPUT"
           fi
           if echo "$changed" | grep -qE '^(src/plugins/phone-remote/|protocol/|\.github/workflows/pr-checks\.yml$|package\.json$|pnpm-lock\.yaml$)'; then
             echo "phone_remote=true" >> "$GITHUB_OUTPUT"
@@ -146,6 +160,120 @@ jobs:
       - name: Phone-remote tests
         if: steps.exists.outputs.present == 'true'
         run: node --test 'src/plugins/phone-remote/tests/*.test.ts'
+
+  android:
+    name: Android build, lint and core tests
+    needs: changes
+    if: needs.changes.outputs.android == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          persist-credentials: false
+
+      - name: Check mobile/ exists
+        id: exists
+        run: |
+          if [ -f mobile/gradlew ] && [ -f mobile/settings.gradle.kts ]; then
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "present=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::mobile/ is not present on this branch; skipping Android checks."
+          fi
+
+      - name: Validate Gradle wrapper
+        if: steps.exists.outputs.present == 'true'
+        uses: gradle/actions/wrapper-validation@v4
+
+      - name: Setup JDK 17
+        if: steps.exists.outputs.present == 'true'
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Install Android SDK packages
+        if: steps.exists.outputs.present == 'true'
+        run: |
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-35" "build-tools;35.0.0"
+
+      - name: Setup Gradle
+        if: steps.exists.outputs.present == 'true'
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          cache-read-only: ${{ github.event_name == 'pull_request' }}
+
+      - name: Core tests, debug build and lint
+        if: steps.exists.outputs.present == 'true'
+        working-directory: mobile
+        run: ./gradlew :core:test :app:assembleDebug :app:lintDebug --stacktrace
+
+  android-interop:
+    name: Android client vs desktop listener (interop)
+    needs: changes
+    if: needs.changes.outputs.interop == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          persist-credentials: false
+
+      - name: Check mobile/ exists
+        id: exists
+        run: |
+          if [ -f mobile/gradlew ] && [ -f mobile/interop/desktop-harness.ts ]; then
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "present=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::mobile/ is not present on this branch; skipping interop."
+          fi
+
+      - name: Validate Gradle wrapper
+        if: steps.exists.outputs.present == 'true'
+        uses: gradle/actions/wrapper-validation@v4
+
+      - name: Install pnpm
+        if: steps.exists.outputs.present == 'true'
+        uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320
+        with:
+          version: 12
+          run_install: false
+
+      - name: Setup NodeJS
+        if: steps.exists.outputs.present == 'true'
+        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        if: steps.exists.outputs.present == 'true'
+        run: pnpm install --frozen-lockfile --ignore-scripts
+
+      - name: Setup JDK 17
+        if: steps.exists.outputs.present == 'true'
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Setup Gradle
+        if: steps.exists.outputs.present == 'true'
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          cache-read-only: ${{ github.event_name == 'pull_request' }}
+
+      - name: Interop tests
+        if: steps.exists.outputs.present == 'true'
+        working-directory: mobile
+        run: ./gradlew -PcoreOnly -Pinterop :core:test --stacktrace
 
   desktop:
     name: Desktop lint + typecheck + build (${{ matrix.os }})
