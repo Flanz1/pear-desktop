@@ -1,10 +1,9 @@
 name: Build PR Artifacts
 
-# Opt-in: the three-platform installer build runs only for pull requests that
+# Opt-in: the installer build (Windows and Linux) runs only for pull requests that
 # carry the `build-artifacts` label (adding the label starts it, later pushes
 # to a labelled PR rebuild). PR Checks already builds and typechecks the app on
-# Linux and Windows for every PR; add the label when you need installers or a
-# macOS build.
+# Linux and Windows for every PR; add the label when you need installers.
 on:
   pull_request:
     types: [opened, synchronize, reopened, labeled]
@@ -50,7 +49,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-latest, ubuntu-latest, windows-latest]
+        os: [ubuntu-latest, windows-latest]
 
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
@@ -169,7 +168,6 @@ jobs:
 
             ### Available builds:
             - **Windows**: \`build-artifacts-windows-latest\`
-            - **macOS**: \`build-artifacts-macos-latest\`
             - **Linux**: \`build-artifacts-ubuntu-latest\`
 
             *Note: Artifacts are available for 7 days.*`;
