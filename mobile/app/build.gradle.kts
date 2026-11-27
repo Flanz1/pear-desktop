@@ -12,9 +12,9 @@ android {
         applicationId = "dev.pear.remote"
         minSdk = 26
         targetSdk = 35
-        versionCode = 100
+        versionCode = 101
         // Sent as client.version in the handshake: must match ^[0-9A-Za-z.+-]{1,32}$.
-        versionName = "1.0.0"
+        versionName = "1.0.1"
     }
 
     // Release signing comes only from the environment (the release workflow
