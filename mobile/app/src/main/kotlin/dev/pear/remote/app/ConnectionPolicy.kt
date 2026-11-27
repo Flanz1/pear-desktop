@@ -28,7 +28,8 @@ import kotlinx.coroutines.launch
  * - App in the background and music playing on the desktop: stay connected,
  *   with the media notification (foreground service).
  * - App in the background and nothing playing: disconnect after a short
- *   grace period (so a pause from the notification can be undone), and the
+ *   idle period (so a pause from the notification can be undone, and a
+ *   quick app switch never costs a reconnect), and the
  *   service stops. No background connection when nothing is playing.
  */
 class ConnectionPolicy(
@@ -116,7 +117,7 @@ class ConnectionPolicy(
     }
 
     private companion object {
-        const val BACKGROUND_GRACE_MS = 60_000L
+        const val BACKGROUND_GRACE_MS = 5 * 60_000L
     }
 }
 
