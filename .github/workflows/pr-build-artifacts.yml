@@ -1,16 +1,15 @@
 name: Build PR Artifacts
 
+# Opt-in: the three-platform installer build runs only for pull requests that
+# carry the `build-artifacts` label (adding the label starts it, later pushes
+# to a labelled PR rebuild). PR Checks already builds and typechecks the app on
+# Linux and Windows for every PR; add the label when you need installers or a
+# macOS build.
 on:
   pull_request:
-    types: [opened, synchronize, reopened]
+    types: [opened, synchronize, reopened, labeled]
 
 permissions: {}
-
-# One run per PR: a new push cancels the superseded run instead of letting its
-# jobs queue (macOS runners are scarce and queued jobs get cancelled after 15m).
-concurrency:
-  group: pr-build-artifacts-${{ github.event.pull_request.number }}
-  cancel-in-progress: true
 
 env:
   NODE_VERSION: "24.x"
@@ -19,7 +18,11 @@ jobs:
   check-permissions:
     permissions:
       contents: read
-    if: github.event.pull_request.draft == false
+    # `labeled` events for any other label are ignored.
+    if: >-
+      github.event.pull_request.draft == false &&
+      contains(github.event.pull_request.labels.*.name, 'build-artifacts') &&
+      (github.event.action != 'labeled' || github.event.label.name == 'build-artifacts')
     name: Check if user has write access
     runs-on: ubuntu-latest
     outputs:
@@ -37,6 +40,13 @@ jobs:
     needs: check-permissions
     if: needs.check-permissions.outputs.has-write-access == 'true'
     runs-on: ${{ matrix.os }}
+    # One run per PR and OS: a new push cancels the superseded build instead of
+    # letting its jobs queue (macOS runners are scarce and queued jobs get
+    # cancelled after 15m). Job-level so runs skipped by the `if` above (an
+    # unrelated label, an unlabelled PR) never cancel a build in progress.
+    concurrency:
+      group: pr-build-artifacts-${{ github.event.pull_request.number }}-${{ matrix.os }}
+      cancel-in-progress: true
     strategy:
       fail-fast: false
       matrix:
