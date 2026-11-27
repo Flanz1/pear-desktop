@@ -89,8 +89,10 @@ Approved by the project owner. Any new permission needs approval first.
   Keystore, in `noBackupFilesDir`, with backups disabled. Secrets are
   redacted from every `toString()` and never logged.
 - **Connections.** Connected while the app is visible. In the background the
-  connection stays only while the desktop is playing (media notification);
-  once nothing plays it closes after 60 s. Events are pushed by the desktop;
+  connection stays while the desktop is playing, held by a foreground
+  service with a media notification (pinned while a track is loaded, also when
+  paused). Once nothing plays and the app is hidden it closes after 5 min, and
+  the notification goes with it. Events are pushed by the desktop;
   the position is interpolated locally; the queue is fetched only while the
   queue screen is open and refreshed on `queue.changed`. WebSocket pings
   every 30 s.

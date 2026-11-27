@@ -21,9 +21,10 @@ import kotlinx.coroutines.launch
 
 /**
  * Hosts the media session: notification, lock-screen controls, media
- * buttons. media3 promotes it to a foreground service (type mediaPlayback)
- * only while the desktop is playing. It stops itself when the connection
- * ends while the app isn't visible.
+ * buttons. It runs as a foreground service (type mediaPlayback) while the
+ * desktop has a track, playing or paused, so the connection survives the app
+ * going to the background. It stops itself when the connection ends while the
+ * app isn't visible.
  */
 @OptIn(UnstableApi::class)
 class RemoteMediaService : MediaSessionService() {
@@ -79,6 +80,21 @@ class RemoteMediaService : MediaSessionService() {
     }
 
     override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaSession? = session
+
+    /**
+     * Keeps the service in the foreground (and the notification pinned) for as
+     * long as there is a track, also while paused. By default media3 only does
+     * that while playing, which lets Android cache or freeze the process when
+     * the app is in the background and paused, killing the socket. The
+     * foreground start happens while the app is visible (the session and its
+     * first notification are created then), so it stays allowed on Android 12+.
+     * [ConnectionPolicy] ends the connection, and with it the service and the
+     * notification, after the idle period.
+     */
+    override fun onUpdateNotification(session: MediaSession, startInForegroundRequired: Boolean) {
+        val hasTrack = session.player.playbackState != androidx.media3.common.Player.STATE_IDLE
+        super.onUpdateNotification(session, startInForegroundRequired || hasTrack)
+    }
 
     override fun onTaskRemoved(rootIntent: Intent?) {
         val app = application as PearRemoteApp
